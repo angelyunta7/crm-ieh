@@ -2498,7 +2498,7 @@ async function abrirFicha(id){
   if(c.estado==='Firmado')setTimeout(function(){cargarFacturasAnyo(id);},200);
 }
 
-function cerrarFicha(){document.getElementById('ficha-overlay').classList.remove('open')}
+function cerrarFicha(){document.getElementById('ficha-overlay').classList.remove('open');if(typeof autoRefrescar==='function')setTimeout(function(){autoRefrescar(true);},50);}
 
 async function cambiarConocimiento(id, valor){
   try{
@@ -4803,11 +4803,18 @@ function _hayEdicionAbierta(){
   if(el){var t=el.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT') return true;}
   return false;
 }
+// ¿Está abierta la ficha de un cliente? Mientras se trabaja dentro de un cliente NO refrescamos,
+// para no repintar los 2048 clientes y congelar la pantalla justo al meter datos (D11).
+function _fichaAbierta(){
+  var f=document.getElementById('ficha-overlay');
+  return !!(f && f.classList.contains('open'));
+}
 
 async function autoRefrescar(force){
   if(!force && document.hidden) return;      // pestaña oculta: se refresca al volver
   if(!session) return;                        // sin sesión: nada que refrescar
   if(_autoRefrescando) return;                // ya hay un refresco en curso
+  if(_fichaAbierta()) return;                 // ficha abierta: no interrumpir la edición (se refresca al cerrarla)
   if(_hayEdicionAbierta()) return;            // no pisar modales / lo que se escribe
   _autoRefrescando=true;
   try{
