@@ -2488,7 +2488,7 @@ async function abrirFicha(id){
       <div class="ficha-section-title">Información adicional</div>
       <div class="ficha-grid">
         <div class="ficha-field"><label>Responsable</label><span>${esc(c.responsable)||'—'}</span></div>
-        <div class="ficha-field"><label>Grupo empresarial</label><span>${c.grupo?('<span style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px;font-size:12px">'+esc(c.grupo)+'</span>'):'\u2014'}</span></div>
+        <div class="ficha-field"><label>Grupo empresarial</label><span>${c.grupo?('<span style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px;font-size:12px">'+esc(c.grupo)+'</span>'):'\u2014'} <button class="btn btn-xs btn-secondary" onclick="editarGrupo('${id}')" style="margin-left:6px">${c.grupo?'\u270e Cambiar':'+ Asignar grupo'}</button></span></div>
         <div class="ficha-field"><label>Canal</label><span>${esc(c.canal)||'—'}</span></div>
         <div class="ficha-field"><label>Riesgo</label><span>${esc(c.riesgo)||'—'}</span></div>
         ${c.concurso_impago?'<div class="ficha-field"><label>Aviso</label><span style="color:var(--red)">Concurso / impago</span></div>':''}
@@ -3759,7 +3759,9 @@ function renderGrupoSociedades(c){
     +'</div>';
 }
 
-function editarGrupo(clienteId,grupoActual){
+function editarGrupo(clienteId){
+  var _cli=clientes.find(function(x){return x.id===clienteId;})||{};
+  var grupoActual=_cli.grupo||'';
   var grupos=[];
   clientes.forEach(function(c){if(c.grupo&&grupos.indexOf(c.grupo)===-1)grupos.push(c.grupo)});
   grupos.sort();
@@ -3792,7 +3794,7 @@ async function guardarGrupo(clienteId){
   var m=document.getElementById('modal-grupo-tmp');
   if(m)m.remove();
   try{
-    await api('PATCH','/rest/v1/clientes?id=eq.'+clienteId,{grupo:grupo});
+    await api('PATCH','/rest/v1/'+tablaEscrituraCliente()+'?id=eq.'+clienteId,{grupo:grupo});
     var c=clientes.find(function(x){return x.id===clienteId});
     if(c)c.grupo=grupo;
     showToast(grupo?'Grupo: '+grupo:'Grupo eliminado','success');
