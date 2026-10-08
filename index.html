@@ -132,6 +132,7 @@ tbody td{padding:10px 14px;font-size:13px}
 .badge-interes{background:var(--amber-bg);color:var(--amber)}
 .badge-firmado{background:var(--green-bg);color:var(--green)}
 .badge-out{background:var(--red-bg);color:var(--red)}
+.badge-extinguida{background:#e5e7eb;color:#374151}
 .badge-w{background:var(--navy);color:var(--white);font-size:10px;padding:2px 6px}
 .badge-a{background:var(--accent);color:var(--white);font-size:10px;padding:2px 6px}
 .dias-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace}
@@ -459,6 +460,10 @@ tbody td{padding:10px 14px;font-size:13px}
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <span>An&#225;lisis</span>
       </button>
+      <button class="nav-item" onclick="showView('matriz',this)">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        <span>Matriz</span>
+      </button>
       <button class="nav-item" onclick="showView('sentencias',this)">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span>Sentencias</span>
@@ -477,7 +482,7 @@ tbody td{padding:10px 14px;font-size:13px}
         </button>
       </div>
       <div style="margin-bottom:8px;padding:4px 10px" class="solo-interno">
-        <button onclick="abrirAsistenteIA()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px">
+        <button id="btn-asistente-ia" onclick="abrirAsistenteIA()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/></svg>
           Asistente IA
         </button>
@@ -555,6 +560,7 @@ tbody td{padding:10px 14px;font-size:13px}
                   <option value="Con Interés">Con Interés</option>
                   <option value="Firmado">Firmado</option>
                   <option value="OUT. Sin interés">OUT</option>
+                  <option value="Extinguida">Extinguida</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Tipo</label>
@@ -577,6 +583,7 @@ tbody td{padding:10px 14px;font-size:13px}
                   <option value="">Todos</option>
                   <option value="Ángel">Ángel</option>
                   <option value="Javier">Javier</option>
+                  <option value="Patricia">Patricia</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Importe mínimo (€)</label>
@@ -616,20 +623,24 @@ tbody td{padding:10px 14px;font-size:13px}
                 <th onclick="ordenarCol('cli','importe_total')">Importe total<span class="sort-arrow" data-col="cli-importe_total"></span></th>
                 <th onclick="ordenarCol('cli','updated_at')">Último contacto<span class="sort-arrow" data-col="cli-updated_at"></span></th>
                 <th onclick="ordenarCol('cli','actividad')">Última actividad<span class="sort-arrow" data-col="cli-actividad"></span></th>
-                <th onclick="ordenarCol('cli','dias')">Días sin contacto<span class="sort-arrow" data-col="cli-dias"></span></th>
+                <th onclick="ordenarCol('cli','act_por')">Actividad por<span class="sort-arrow" data-col="cli-act_por"></span></th>
+                <th onclick="ordenarCol('cli','fecha_llamar')">Próxima llamada<span class="sort-arrow" data-col="cli-fecha_llamar"></span></th>
+                <th class="col-dias" onclick="ordenarCol('cli','dias')">Días sin contacto<span class="sort-arrow" data-col="cli-dias"></span></th>
                 <th class="col-hide-mobile" onclick="ordenarCol('cli','responsable')">Responsable<span class="sort-arrow" data-col="cli-responsable"></span></th>
               </tr>
               <tr class="filter-row">
                 <th><input type="text" id="cf-nombre" placeholder="Filtrar..." oninput="filtrar()"></th>
                 <th><input type="text" id="cf-cif" placeholder="Filtrar..." oninput="filtrar()"></th>
                 <th><select id="cf-tipo" onchange="filtrar()"><option value="">Todos</option><option>Wholesale</option><option>Abanderado</option></select></th>
-                <th><select id="cf-estado" onchange="filtrar()"><option value="">Todos</option><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option><option value="Firmado">Firmado</option><option value="OUT. Sin interés">OUT</option></select></th>
+                <th><select id="cf-estado" onchange="filtrar()"><option value="">Todos</option><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option><option value="Firmado">Firmado</option><option value="OUT. Sin interés">OUT</option><option value="Extinguida">Extinguida</option></select></th>
                 <th><select id="cf-conocimiento" onchange="filtrar()"><option value="">Todos</option><option>Nulo</option><option>Medio</option><option>Alto</option></select></th>
                 <th><div class="col-num-range"><input type="number" id="cf-imp-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-imp-max" placeholder="máx" oninput="filtrar()"></div></th>
                 <th></th>
-                <th><input type="month" id="cf-act-mes" title="Muestra clientes sin actividad desde ese mes" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2)"><div style="font-size:9px;color:var(--text3);margin-top:1px">sin actividad desde</div></th>
-                <th><div class="col-num-range"><input type="number" id="cf-dias-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-dias-max" placeholder="máx" oninput="filtrar()"></div></th>
-                <th class="col-hide-mobile"><select id="cf-responsable" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option></select></th>
+                <th><input type="date" id="cf-act-desde" title="Última actividad DESDE esta fecha" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2);margin-bottom:2px"><input type="date" id="cf-act-hasta" title="Última actividad HASTA esta fecha (incluye los que no tienen actividad)" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2)"><div style="font-size:9px;color:var(--text3);margin-top:1px">desde / hasta</div></th>
+                <th><select id="cf-act-por" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option><option value="Otros">Otros</option><option value="__sin">Sin actividad</option></select></th>
+                <th><select id="cf-llamar" onchange="filtrar()"><option value="">Todas</option><option value="vencidas">Vencidas</option><option value="hoy">Hoy</option><option value="semana">Próx. 7 días</option><option value="con">Con fecha</option><option value="sin">Sin fecha</option></select></th>
+                <th class="col-dias"><div class="col-num-range"><input type="number" id="cf-dias-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-dias-max" placeholder="máx" oninput="filtrar()"></div></th>
+                <th class="col-hide-mobile"><select id="cf-responsable" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option></select></th>
               </tr>
               </thead>
               <tbody id="tabla-body"></tbody>
@@ -709,6 +720,7 @@ tbody td{padding:10px 14px;font-size:13px}
                   <option value="">Todos</option>
                   <option value="Ángel">Ángel</option>
                   <option value="Javier">Javier</option>
+                  <option value="Patricia">Patricia</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Importe mínimo (€)</label>
@@ -791,6 +803,7 @@ tbody td{padding:10px 14px;font-size:13px}
                   <option value="">Todos</option>
                   <option value="Ángel">Ángel</option>
                   <option value="Javier">Javier</option>
+                  <option value="Patricia">Patricia</option>
                 </select>
               </div>
             </div>
@@ -806,6 +819,7 @@ tbody td{padding:10px 14px;font-size:13px}
                 <th onclick="ordenarCol('fir','importe')">Importe total<span class="sort-arrow" data-col="fir-importe"></span></th>
                 <th onclick="ordenarCol('fir','pct')">% comisión<span class="sort-arrow" data-col="fir-pct"></span></th>
                 <th onclick="ordenarCol('fir','actividad')">Última actividad<span class="sort-arrow" data-col="fir-actividad"></span></th>
+                <th onclick="ordenarCol('fir','act_por')">Actividad por<span class="sort-arrow" data-col="fir-act_por"></span></th>
                 <th onclick="ordenarCol('fir','litros')">Litros<span class="sort-arrow" data-col="fir-litros"></span></th>
                 <th onclick="ordenarCol('fir','facturas')">Facturas<span class="sort-arrow" data-col="fir-facturas"></span></th>
                 <th onclick="ordenarCol('fir','tarifarios')">Tarifarios<span class="sort-arrow" data-col="fir-tarifarios"></span></th>
@@ -820,11 +834,13 @@ tbody td{padding:10px 14px;font-size:13px}
                 <th><div class="col-num-range"><input type="number" id="ff-imp-min" placeholder="mín" oninput="filtrarFirmados()"><input type="number" id="ff-imp-max" placeholder="máx" oninput="filtrarFirmados()"></div></th>
                 <th></th>
                 <th><input type="text" id="ff-actividad" placeholder="Filtrar..." oninput="filtrarFirmados()" style="margin-bottom:4px">
-                  <input type="month" id="ff-act-mes" title="Muestra clientes sin actividad desde ese mes (para ver a quién llamar)" onchange="filtrarFirmados()" style="width:100%;font-size:11px;color:var(--text2)">
-                  <div style="font-size:9px;color:var(--text3);margin-top:1px">sin actividad desde</div></th>
+                  <input type="date" id="ff-act-desde" title="Última actividad DESDE esta fecha" onchange="filtrarFirmados()" style="width:100%;font-size:11px;color:var(--text2);margin-bottom:2px">
+                  <input type="date" id="ff-act-hasta" title="Última actividad HASTA esta fecha (incluye los que no tienen actividad)" onchange="filtrarFirmados()" style="width:100%;font-size:11px;color:var(--text2)">
+                  <div style="font-size:9px;color:var(--text3);margin-top:1px">desde / hasta</div></th>
+                <th><select id="ff-act-por" onchange="filtrarFirmados()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option><option value="Otros">Otros</option><option value="__sin">Sin actividad</option></select></th>
                 <th><select id="ff-litros" onchange="filtrarFirmados()"><option value="">Todos</option><option value="Sin información">Sin información</option><option value="Solicitada">Solicitada</option><option value="Compartida">Compartida</option><option value="No disponen">No disponen</option></select></th>
                 <th><select id="ff-facturas" onchange="filtrarFirmados()"><option value="">Todos</option><option value="Sin información">Sin información</option><option value="Solicitada">Solicitada</option><option value="Compartida">Compartida</option></select></th>
-                <th><select id="ff-tarifarios" onchange="filtrarFirmados()"><option value="">Todos</option><option value="Sin información">Sin información</option><option value="Solicitada">Solicitada</option><option value="Compartida">Compartida</option></select></th>
+                <th><select id="ff-tarifarios" onchange="filtrarFirmados()"><option value="">Todos</option><option value="Sin información">Sin información</option><option value="Solicitada">Solicitada</option><option value="Compartida">Compartida</option><option value="No disponen">No disponen</option></select></th>
                 <th><select id="ff-cuentas" onchange="filtrarFirmados()"><option value="">Todos</option><option value="Sin solicitar">Sin solicitar</option><option value="Solicitadas">Solicitadas</option><option value="Recibidas">Recibidas</option></select></th>
                 <th><select id="ff-fcomp" onchange="filtrarFirmados()"><option value="">Todos</option><option>Sí</option><option>No</option></select></th>
                 <th><select id="ff-pn" onchange="filtrarFirmados()"><option value="">Todos</option><option value="No solicitado">No solicitado</option><option value="Solicitado">Solicitado</option><option value="Compartido">Compartido</option></select></th>
@@ -917,6 +933,48 @@ tbody td{padding:10px 14px;font-size:13px}
           </div>
           <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Cada tarifario es de una petrolera y un año, y se comparte entre todos los clientes. Haz clic en una celda para cambiar su estado.</div>
           <div style="overflow-x:auto"><div id="tarifarios-body">Cargando...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-matriz" class="view">
+      <div class="topbar">
+        <span class="topbar-title">Matriz de importes</span>
+      </div>
+      <div class="content">
+        <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)">
+              Estado:
+              <select id="mx-estado" onchange="renderMatrizImportes()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+                <option value="Firmado" selected>Firmados</option>
+                <option value="Con Inter&#233;s">Con Inter&#233;s</option>
+                <option value="Contactado">Contactado</option>
+                <option value="Sin contactar">Sin contactar</option>
+                <option value="">Toda la cartera</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)">
+              Columnas:
+              <select id="mx-eje" onchange="renderMatrizImportes()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+                <option value="anyo" selected>Ejercicio</option>
+                <option value="petrolera">Petrolera</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)">
+              Origen:
+              <select id="mx-fuente" onchange="renderMatrizImportes()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+                <option value="todas" selected>Todas las petroleras</option>
+                <option value="saras">Solo SARAS</option>
+              </select>
+            </div>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);cursor:pointer">
+              <input type="checkbox" id="mx-ccaa" onchange="renderMatrizImportes()"> Agrupar por CCAA
+            </label>
+            <button class="btn btn-xs btn-secondary" onclick="exportarMatrizImportes()" style="margin-left:auto">&#8681; Exportar a Excel</button>
+          </div>
+          <div id="mx-kpis" style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;color:var(--text2)"></div>
+          <div style="overflow-x:auto;max-height:70vh"><div id="mx-body">Cargando...</div></div>
         </div>
       </div>
     </div>
@@ -1253,6 +1311,9 @@ tbody td{padding:10px 14px;font-size:13px}
         <datalist id="ed-grupos-list"></datalist>
       </div>
       <div class="form-field"><label>Canal</label><input type="text" id="ed-canal" placeholder="BL / GS / OL..."></div>
+      <div class="form-field"><label>Comunidad autónoma</label><input type="text" id="ed-ccaa" placeholder="Ej: Extremadura" list="ed-ccaa-list">
+        <datalist id="ed-ccaa-list"><option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option><option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option><option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option><option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option></datalist>
+      </div>
     </div>
     <div class="form-field" style="margin-bottom:14px"><label>Notas / situación</label>
       <textarea id="ed-notas" style="min-height:60px"></textarea>
@@ -1414,6 +1475,8 @@ tbody td{padding:10px 14px;font-size:13px}
 <style>
 /* Modo externo: ocultar la columna "% comisión" (5ª) de Firmados y el filtro por importe */
 body.modo-externo #view-firmados table tr > *:nth-child(5){display:none;}
+/* Usuario limitado: 'Días sin contacto' se sustituye por 'Próxima llamada' */
+body.modo-externo .col-dias{display:none;}
 body.modo-externo #ff-imp-min, body.modo-externo #ff-imp-max{display:none;}
 /* Barra de scroll de la ficha: más ancha y siempre visible (fácil de agarrar) */
 .ficha-panel{scrollbar-width:auto;scrollbar-color:#9aa4b2 var(--cream)}
@@ -1457,6 +1520,10 @@ async function detectarModoExterno(email){
 }
 function aplicarModoExterno(){
   if(!MODO_EXTERNO)return;
+  // Asistente IA: no disponible para usuarios restringidos (la edge function
+  // ya devuelve 403; aqui se oculta el boton para no ofrecer algo que falla).
+  var _ia=document.getElementById('btn-asistente-ia');
+  if(_ia&&_ia.parentElement) _ia.parentElement.style.display='none';
   // Menú (escritorio y móvil): dejar solo Clientes y Firmados.
   var clientesBtn=null;
   document.querySelectorAll('.nav-item, .mobile-nav-btn').forEach(function(b){
@@ -1689,7 +1756,7 @@ async function _fetchClientesAll(){
 // Repinta todo lo que depende de `clientes` (lista, dashboard, badges, firmados)
 function _renderClientes(){
   cargarContactosIndex().then(function(){ filtrar(); filtrarFirmados(); }).catch(function(){});
-  api('GET','/rest/v1/actividad?select=cliente_id,fecha,notas,tipo&order=fecha.desc&limit=1000').then(function(acts){
+  _fetchActividadAll().then(function(acts){
     if(!acts)return;
     // La "última actividad" del listado refleja la del GRUPO (como la ficha); si no hay grupo, la del propio cliente.
     var grupoDe={}; clientes.forEach(function(c){ grupoDe[c.id]=c.grupo||null; });
@@ -1706,8 +1773,11 @@ function _renderClientes(){
         var nota=a.notas?a.notas.slice(0,45)+(a.notas.length>45?'...':''):'';
         c._ultima_act=fecha+(nota?' - '+nota:'');
         c._ultima_act_ts=new Date(a.fecha).getTime();   // para ordenar por fecha real
-      }else{ c._ultima_act=''; c._ultima_act_ts=0; }
+        c._ultima_act_persona=(a.persona_rhj||'').trim();
+        c._ultima_act_por=normPersonaRHJ(a.persona_rhj);
+      }else{ c._ultima_act=''; c._ultima_act_ts=0; c._ultima_act_persona=''; c._ultima_act_por=''; }
     });
+    filtrar();
     filtrarFirmados();
   }).catch(function(){});
   actualizarBadges();actualizarBadgesMobile();
@@ -1743,6 +1813,72 @@ function valPrioridad(c){
   return impFull(c);
 }
 
+// ── Última actividad: autor + filtros por fecha/persona · Próxima llamada ──
+// Descarga paginada de actividades (orden estable con id) para calcular la última de cada cliente.
+async function _fetchActividadAll(){
+  var todos=[],off=0;
+  while(true){
+    var p=await api('GET','/rest/v1/actividad?select=id,cliente_id,fecha,notas,tipo,persona_rhj&order=fecha.desc,id.desc&limit=1000&offset='+off);
+    if(!p||!p.length) break;
+    todos=todos.concat(p);
+    if(p.length<1000) break;
+    off+=1000;
+  }
+  return todos;
+}
+// Normaliza quién hizo la actividad. En datos antiguos hay nombres de contactos de clientes;
+// solo se reconocen las 3 personas de RHJ ("JA" = Javier Albares). El resto -> "Otros".
+function normPersonaRHJ(p){
+  var s=(p||'').trim(); if(!s) return '';
+  var k=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(k==='angel') return 'Ángel';
+  if(k==='javier'||k==='ja') return 'Javier';
+  if(k==='patricia') return 'Patricia';
+  return 'Otros';
+}
+function _isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _hoyISO(){ return _isoLocal(new Date()); }
+function _isoMasDias(n){ var d=new Date(); d.setDate(d.getDate()+n); return _isoLocal(d); }
+// "aaaa-mm-dd" -> timestamp del inicio (o final) de ese día; null si vacío
+function _tsDia(iso, finDeDia){
+  if(!iso) return null;
+  var p=iso.split('-'); if(p.length<3) return null;
+  return finDeDia ? new Date(+p[0],(+p[1])-1,+p[2],23,59,59,999).getTime() : new Date(+p[0],(+p[1])-1,+p[2]).getTime();
+}
+// "hasta" incluye a los que no tienen actividad (útil para ver a quién no se ha llamado)
+function _pasaFiltroActividad(c,desde,hasta,por){
+  var ts=c._ultima_act_ts||0;
+  if(desde!==null && ts<desde) return false;
+  if(hasta!==null && ts>hasta) return false;
+  if(por){ if(por==='__sin'){ if(c._ultima_act_por) return false; } else if(c._ultima_act_por!==por) return false; }
+  return true;
+}
+function _pasaFiltroLlamar(f,modo){
+  if(modo==='sin') return !f;
+  if(!f) return false;
+  var hoy=_hoyISO();
+  if(modo==='con') return true;
+  if(modo==='vencidas') return f<hoy;
+  if(modo==='hoy') return f===hoy;
+  if(modo==='semana') return f>=hoy && f<=_isoMasDias(7);
+  return true;
+}
+function badgePersona(c){
+  var por=c&&c._ultima_act_por;
+  if(!por) return '<span style="color:var(--text3);font-size:12px">—</span>';
+  var col={'Ángel':['#dbeafe','#1d4ed8'],'Javier':['#dcfce7','#15803d'],'Patricia':['#fae8ff','#a21caf']}[por]||['#f3f4f6','#4b5563'];
+  var txt=por==='Otros'?(c._ultima_act_persona||'Otros'):por;
+  return '<span title="'+esc(c._ultima_act_persona||'')+'" style="background:'+col[0]+';color:'+col[1]+';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap">'+esc(txt)+'</span>';
+}
+function badgeLlamar(f){
+  if(!f) return '<span style="color:var(--text3);font-size:12px">—</span>';
+  var hoy=_hoyISO(), p=String(f).split('-'), txt=p[2]+'/'+p[1]+'/'+p[0], bg, co, ic='';
+  if(f<hoy){bg='#fee2e2';co='#b91c1c';ic='⚠ ';}
+  else if(f===hoy){bg='#fef3c7';co='#b45309';ic='Hoy · ';}
+  else {bg='#f3f4f6';co='#4b5563';}
+  return '<span title="Próxima llamada" style="background:'+bg+';color:'+co+';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap">'+ic+txt+'</span>';
+}
+
 // Rellena el desplegable "Grupo empresarial" con los grupos existentes (conserva la selección).
 function poblarFiltroGrupo(){
   var sel=document.getElementById('f-grupo'); if(!sel) return;
@@ -1772,6 +1908,7 @@ function showView(v,btn){
     actualizarSelectorPetroleras();
     if(MODO_EXTERNO) filtrarFirmados();
   }
+  if(v==='matriz'){ if(!Object.keys(_recPorCliente||{}).length) cargarReclamacionesFirmados().then(renderMatrizImportes); else renderMatrizImportes(); }
   if(v==='sentencias') cargarSentencias(false);
   if(v==='admin') renderUsuariosAdmin();
   if(v==='clientes'){ _soloNoFirmados=false; _setClientesTitulo(false); filtrar(); }
@@ -1809,9 +1946,10 @@ function filtrar(){
   var cfImpMax=parseFloat(getVal('cf-imp-max'))||Infinity;
   var cfDiasMin=getVal('cf-dias-min')!==''?parseFloat(getVal('cf-dias-min')):null;
   var cfDiasMax=getVal('cf-dias-max')!==''?parseFloat(getVal('cf-dias-max')):null;
-  // Filtro por última actividad: "sin actividad desde ese mes" (para ver a quién llamar)
-  var cfActMes=getVal('cf-act-mes'), cfActCutoff=null;
-  if(cfActMes){var _pm=cfActMes.split('-');cfActCutoff=new Date(+_pm[0],(+_pm[1])-1,1).getTime();}
+  // Filtro por última actividad: rango de fechas (desde / hasta) y persona que la hizo
+  var cfActDesde=_tsDia(getVal('cf-act-desde'),false), cfActHasta=_tsDia(getVal('cf-act-hasta'),true);
+  var cfActPor=getVal('cf-act-por');
+  var cfLlamar=getVal('cf-llamar');
 
   clientesFiltrados=clientes.filter(function(c){
     if(q&&!_clienteCoincide(c,q))return false;
@@ -1839,7 +1977,8 @@ function filtrar(){
       if(cfDiasMin!==null&&dd<cfDiasMin)return false;
       if(cfDiasMax!==null&&dd>cfDiasMax)return false;
     }
-    if(cfActCutoff!==null && (c._ultima_act_ts||0) >= cfActCutoff) return false;
+    if(!_pasaFiltroActividad(c,cfActDesde,cfActHasta,cfActPor)) return false;
+    if(cfLlamar && !_pasaFiltroLlamar(c.fecha_llamar,cfLlamar)) return false;
     if(_soloNoFirmados && c.estado==='Firmado') return false;
     return true;
   });
@@ -1850,6 +1989,8 @@ function filtrar(){
       var va,vb;
       if(oc.col==='dias'){va=diasSinContacto(a);vb=diasSinContacto(b);va=va==null?-1:va;vb=vb==null?-1:vb;}
       else if(oc.col==='actividad'){va=a._ultima_act_ts||0;vb=b._ultima_act_ts||0;}
+      else if(oc.col==='act_por'){va=a._ultima_act_por||'';vb=b._ultima_act_por||'';}
+      else if(oc.col==='fecha_llamar'){ var fa=a.fecha_llamar||'', fb=b.fecha_llamar||''; if(!fa||!fb) return (fa?-1:0)+(fb?1:0); va=fa; vb=fb; }
       else if(oc.col==='importe_total'){va=valPrioridad(a);vb=valPrioridad(b);}
       else if(oc.col==='updated_at'){va=new Date(a.updated_at||0).getTime();vb=new Date(b.updated_at||0).getTime();}
       else {va=a[oc.col];vb=b[oc.col];}
@@ -1872,7 +2013,7 @@ var _ordenCol = { cli:{col:null,dir:1}, fir:{col:null,dir:1} };
 function ordenarCol(tabla, col){
   var st = _ordenCol[tabla];
   if(st.col===col){ st.dir = -st.dir; }   // mismo: invertir
-  else { st.col = col; st.dir = -1; }      // nuevo: empezar descendente (mayor a menor)
+  else { st.col = col; st.dir = (col==='fecha_llamar') ? 1 : -1; }      // nuevo: descendente; la próxima llamada, de la más cercana a la más lejana
   _pintarFlechas(tabla);
   if(tabla==='cli') filtrar();
   else filtrarFirmados();
@@ -1916,7 +2057,7 @@ function renderTabla(){
   var inicio=(paginaActual-1)*_tp;
   var pagina=clientesFiltrados.slice(inicio,inicio+_tp);
   var tbody=document.getElementById('tabla-body');
-  if(!pagina.length){tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><p>Sin resultados</p></div></td></tr>';renderPag();return}
+  if(!pagina.length){tbody.innerHTML='<tr><td colspan="12"><div class="empty-state"><p>Sin resultados</p></div></td></tr>';renderPag();return}
   tbody.innerHTML=pagina.map(function(c){
     var dias=diasSinContacto(c);
     var diasBadge=dias===null?'<span style="color:var(--text3);font-size:12px">—</span>':`<span class="dias-badge ${dias<7?'dias-ok':dias<21?'dias-warn':'dias-alert'}">${dias}d</span>`;
@@ -1929,7 +2070,9 @@ function renderTabla(){
       <td class="td-mono" data-label="Importe">${MODO_EXTERNO?badgeNivel(c.nivel):formatEur(impFull(c))}</td>
       <td style="font-size:12px;color:var(--text3)" data-label="Último contacto">${c.updated_at?new Date(c.updated_at).toLocaleDateString('es-ES'):'—'}</td>
       <td style="font-size:12px;color:var(--text2);max-width:220px" data-label="Última actividad">${esc(c._ultima_act)||'—'}</td>
-      <td class="col-hide-mobile" data-label="Días s/ contacto">${diasBadge}</td>
+      <td data-label="Actividad por">${badgePersona(c)}</td>
+      <td data-label="Próxima llamada">${badgeLlamar(c.fecha_llamar)}</td>
+      <td class="col-hide-mobile col-dias" data-label="Días s/ contacto">${diasBadge}</td>
       <td style="font-size:12px;color:var(--text2)" data-label="Responsable">${esc(c.responsable)||'—'}</td>
     </tr>`}).join('');
   renderPag();
@@ -1990,7 +2133,7 @@ async function renderNovedades(){if(MODO_EXTERNO)return;
   }catch(e){}
 }
 function renderDashboard(){if(MODO_EXTERNO)return;
-  var counts={'Sin contactar':0,'Contactado':0,'Con Interés':0,'Firmado':0,'OUT. Sin interés':0};
+  var counts={'Sin contactar':0,'Contactado':0,'Con Interés':0,'Firmado':0,'OUT. Sin interés':0,'Extinguida':0};
   clientes.forEach(function(c){
     if(counts[c.estado]!==undefined)counts[c.estado]++;
     else counts['Sin contactar']++;
@@ -2008,8 +2151,8 @@ function renderDashboard(){if(MODO_EXTERNO)return;
   document.getElementById('st-interes').textContent=counts['Contactado']+counts['Con Interés'];
   document.getElementById('st-sincontactar').textContent=formatNum(counts['Sin contactar']);
   document.getElementById('st-potencial').textContent=formatEur(potencial)+' potencial';
-  var cols={'Sin contactar':'#d1d5db','Contactado':'#60a5fa','Con Interés':'#fbbf24','Firmado':'#34d399','OUT. Sin interés':'#f87171'};
-  var maxC=Math.max(counts['Sin contactar'],counts['Contactado'],counts['Con Interés'],counts['Firmado'],counts['OUT. Sin interés'],1);
+  var cols={'Sin contactar':'#d1d5db','Contactado':'#60a5fa','Con Interés':'#fbbf24','Firmado':'#34d399','OUT. Sin interés':'#f87171','Extinguida':'#9ca3af'};
+  var maxC=Math.max.apply(null,Object.keys(counts).map(function(k){return counts[k];}).concat([1]));
   document.getElementById('chart-estados').innerHTML=Object.keys(counts).map(function(k){
     return '<div class="bar-row"><span class="bar-label">'+k+'</span>'
       +'<div class="bar-track"><div class="bar-fill" style="width:'+Math.round(counts[k]/maxC*100)+'%;background:'+cols[k]+'"></div></div>'
@@ -2128,8 +2271,8 @@ function filtrarFirmados(){
   var ffNombre=(getVal('ff-nombre')||'').toLowerCase();
   var ffTipo=getVal('ff-tipo');
   var ffActividad=(getVal('ff-actividad')||'').toLowerCase();
-  var ffActMes=getVal('ff-act-mes'); // "aaaa-mm": muestra clientes sin actividad desde ese mes
-  var ffActCutoff=null; if(ffActMes){var _p=ffActMes.split('-'); if(_p.length===2) ffActCutoff=new Date(parseInt(_p[0],10), parseInt(_p[1],10)-1, 1).getTime();}
+  var ffActDesde=_tsDia(getVal('ff-act-desde'),false), ffActHasta=_tsDia(getVal('ff-act-hasta'),true);
+  var ffActPor=getVal('ff-act-por');
   var ffLitros=getVal('ff-litros');
   var ffFacturas=getVal('ff-facturas');
   var ffTarifarios=getVal('ff-tarifarios');
@@ -2151,7 +2294,7 @@ function filtrarFirmados(){
     if(ffNombre&&!((c.nombre||'').toLowerCase().includes(ffNombre)))return false;
     if(ffTipo&&c.tipo!==ffTipo)return false;
     if(ffActividad&&!((c._ultima_act||'').toLowerCase().includes(ffActividad)))return false;
-    if(ffActCutoff!==null && (c._ultima_act_ts||0) >= ffActCutoff) return false;
+    if(!_pasaFiltroActividad(c,ffActDesde,ffActHasta,ffActPor)) return false;
     if(ffLitros&&c.litros!==ffLitros)return false;
     if(ffFacturas&&c.facturas!==ffFacturas)return false;
     if(ffTarifarios&&c.tarifarios!==ffTarifarios)return false;
@@ -2171,6 +2314,7 @@ function filtrarFirmados(){
       else if(oc.col==='pct'){va=pctComision(a,tramoBase(a,lista,getImp));vb=pctComision(b,tramoBase(b,lista,getImp));}
       else if(oc.col==='fecha_firma'){va=new Date(a.fecha_firma||0).getTime();vb=new Date(b.fecha_firma||0).getTime();}
       else if(oc.col==='actividad'){va=a._ultima_act_ts||0;vb=b._ultima_act_ts||0;}
+      else if(oc.col==='act_por'){va=a._ultima_act_por||'';vb=b._ultima_act_por||'';}
       else if(oc.col==='pn_sol'){va=a.poder_notarial_solicitado||'';vb=b.poder_notarial_solicitado||'';}
       else if(oc.col==='pn_comp'){va=a.poder_notarial_compartido||'';vb=b.poder_notarial_compartido||'';}
       else {va=a[oc.col];vb=b[oc.col];}
@@ -2210,6 +2354,7 @@ function filtrarFirmados(){
       +(MODO_EXTERNO?'<td data-label="Prioridad">'+badgeNivel(c.nivel)+'</td>':'<td class="td-mono" data-label="Importe">'+formatEur(imp)+'</td>')
       +'<td class="td-mono" data-label="% comisión">'+pct_html+'</td>'
       +'<td style="font-size:12px;color:var(--text2);max-width:220px" data-label="Última actividad">'+(esc(c._ultima_act)||'—')+'</td>'
+      +'<td data-label="Actividad por">'+badgePersona(c)+'</td>'
       +'<td style="text-align:center" data-label="Litros">'+badgeDocs(c.litros)+'</td>'
       +'<td style="text-align:center" data-label="Facturas">'+badgeDocs(c.facturas)+'</td>'
       +'<td style="text-align:center" data-label="Tarifarios">'+badgeDocs(c.tarifarios)+'</td>'
@@ -2217,7 +2362,7 @@ function filtrarFirmados(){
       +'<td style="text-align:center" data-label="F. completas">'+badgeSiNo(c.facturas_completas)+'</td>'
       +'<td style="text-align:center" data-label="PN">'+badgeDocs(c.poder_notarial)+'</td>'
       +'</tr>';
-  }).join('')||'<tr><td colspan="12"><div class="empty-state"><p>Ningún cliente firmado aún</p></div></td></tr>';
+  }).join('')||'<tr><td colspan="13"><div class="empty-state"><p>Ningún cliente firmado aún</p></div></td></tr>';
 
   if(typeof renderGraficoFirmados==='function') renderGraficoFirmados();
 }
@@ -2256,8 +2401,8 @@ async function abrirFicha(id){
   var _comentPorDoc={};(docComentarios||[]).forEach(function(x){(_comentPorDoc[x.documento_id]=_comentPorDoc[x.documento_id]||[]).push(x);});
   _docMeta={};documentos.forEach(function(d){_docMeta[d.id]={p:d.storage_path,n:d.nombre};});
 
-  var estados=['Sin contactar','Contactado','Con Interés','Firmado','OUT. Sin interés'];
-  var colE={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Firmado':'badge-firmado','OUT. Sin interés':'badge-out'};
+  var estados=['Sin contactar','Contactado','Con Interés','Firmado','OUT. Sin interés','Extinguida'];
+  var colE={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Firmado':'badge-firmado','OUT. Sin interés':'badge-out','Extinguida':'badge-extinguida'};
 
   document.getElementById('ficha-body').innerHTML=`
     ${c.grupo?renderGrupoSociedades(c):''}
@@ -2274,6 +2419,11 @@ async function abrirFicha(id){
           var op=c.conocimiento_ieh===k?'1':'.4';
           return `<button onclick="cambiarConocimiento('${id}','${k}')" style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:2px solid ${col};background:${bg};color:${col};opacity:${op}">${k}</button>`;
         }).join('')}
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text3);font-weight:500">📞 Próxima llamada:</span>
+        <input type="date" id="fl-${id}" value="${c.fecha_llamar||''}" onchange="actualizarCampoFirmado('${id}','fecha_llamar',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none">
+        <button class="btn btn-xs btn-ghost" onclick="var i=document.getElementById('fl-${id}');if(i){i.value='';}actualizarCampoFirmado('${id}','fecha_llamar','')">Quitar</button>
       </div>
     </div>
 
@@ -2316,6 +2466,7 @@ async function abrirFicha(id){
             <option value="Sin información" ${c.tarifarios==='Sin información'?'selected':''}>Sin información</option>
             <option value="Solicitada" ${c.tarifarios==='Solicitada'?'selected':''}>Solicitada</option>
             <option value="Compartida" ${c.tarifarios==='Compartida'?'selected':''}>Compartida</option>
+            <option value="No disponen" ${c.tarifarios==='No disponen'?'selected':''}>No disponen</option>
           </select>
         </div>
         <div class="ficha-field"><label>Cuentas anuales</label>
@@ -2490,6 +2641,7 @@ async function abrirFicha(id){
         <div class="ficha-field"><label>Responsable</label><span>${esc(c.responsable)||'—'}</span></div>
         <div class="ficha-field"><label>Grupo empresarial</label><span>${c.grupo?('<span style="background:var(--blue-bg);color:var(--blue);padding:2px 8px;border-radius:10px;font-size:12px">'+esc(c.grupo)+'</span>'):'\u2014'} <button class="btn btn-xs btn-secondary" onclick="editarGrupo('${id}')" style="margin-left:6px">${c.grupo?'\u270e Cambiar':'+ Asignar grupo'}</button></span></div>
         <div class="ficha-field"><label>Canal</label><span>${esc(c.canal)||'—'}</span></div>
+        <div class="ficha-field"><label>Comunidad autónoma</label><span>${esc(c.ccaa)||'—'}</span></div>
         <div class="ficha-field"><label>Riesgo</label><span>${esc(c.riesgo)||'—'}</span></div>
         ${c.concurso_impago?'<div class="ficha-field"><label>Aviso</label><span style="color:var(--red)">Concurso / impago</span></div>':''}
       </div>
@@ -2751,12 +2903,54 @@ function addContactoRow(){
 }
 
 function openModalContacto(clienteId){
-  var nombre=prompt('Nombre del contacto:');if(!nombre)return;
-  var tel=prompt('Teléfono (opcional):');
-  var email=prompt('Email (opcional):');
-  api('POST','/rest/v1/contactos',{cliente_id:clienteId,nombre,telefono:tel||null,email:email||null,es_principal:false})
-    .then(function(){showToast('Contacto añadido','success');abrirFicha(clienteId);})
-    .catch(function(e){showToast('Error: '+e.message,'error');});
+  var ov=document.getElementById('modal-contacto-nuevo');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='modal-contacto-nuevo'; ov.className='modal';
+    ov.innerHTML='<div class="modal-content" style="max-width:460px">'
+      +'<div class="modal-header"><h3 style="margin:0">Nuevo contacto</h3>'
+      +'<button class="btn-icon" onclick="closeModal(\'modal-contacto-nuevo\')">&#10005;</button></div>'
+      +'<div class="modal-body">'
+      +'<p style="margin:0 0 14px;font-size:12.5px;color:var(--text3)">Rellena al menos un dato. Todos son opcionales.</p>'
+      +'<div class="form-field" style="margin-bottom:10px"><label>Nombre</label><input type="text" id="mcn-nombre" placeholder="Nombre y apellidos"></div>'
+      +'<div class="form-field" style="margin-bottom:10px"><label>Cargo</label><input type="text" id="mcn-cargo" placeholder="Ej: Responsable de compras"></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
+      +'<div class="form-field"><label>Tel&#233;fono</label><input type="tel" id="mcn-telefono" placeholder="900 000 000"></div>'
+      +'<div class="form-field"><label>M&#243;vil</label><input type="tel" id="mcn-movil" placeholder="600 000 000"></div></div>'
+      +'<div class="form-field" style="margin-bottom:4px"><label>Email</label><input type="email" id="mcn-email" placeholder="nombre@empresa.com"></div>'
+      +'</div>'
+      +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal(\'modal-contacto-nuevo\')">Cancelar</button>'
+      +'<button class="btn btn-primary" id="mcn-guardar">Guardar contacto</button></div></div>';
+    document.body.appendChild(ov);
+  }
+  ['mcn-nombre','mcn-cargo','mcn-telefono','mcn-movil','mcn-email'].forEach(function(id){
+    var e=document.getElementById(id); if(e) e.value='';
+  });
+  document.getElementById('mcn-guardar').onclick=function(){ guardarContactoNuevo(clienteId); };
+  ov.classList.add('open');
+  setTimeout(function(){ var n=document.getElementById('mcn-nombre'); if(n) n.focus(); },50);
+}
+
+async function guardarContactoNuevo(clienteId){
+  function v(id){ var e=document.getElementById(id); return e && e.value.trim() ? e.value.trim() : null; }
+  var ct={ cliente_id:clienteId, nombre:v('mcn-nombre'), cargo:v('mcn-cargo'),
+           telefono:v('mcn-telefono'), movil:v('mcn-movil'), email:v('mcn-email'), es_principal:false };
+  if(!ct.nombre && !ct.telefono && !ct.movil && !ct.email && !ct.cargo){
+    showToast('Rellena al menos un dato del contacto','error'); return;
+  }
+  var btn=document.getElementById('mcn-guardar');
+  if(btn){ btn.disabled=true; btn.textContent='Guardando...'; }
+  try{
+    await api('POST','/rest/v1/contactos',ct);
+    invalidateCache('/rest/v1/contactos');
+    closeModal('modal-contacto-nuevo');
+    showToast('Contacto añadido','success');
+    abrirFicha(clienteId);
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='Guardar contacto'; }
+  }
 }
 
 function openModalNuevo(){var r=document.getElementById('nc-responsable');if(r&&!r.value)r.value=nombreUsuario();document.getElementById('modal-nuevo').classList.add('open')}
@@ -2863,7 +3057,7 @@ function badgeKnowledge(k){
 }
 
 function badgeEstado(e){
-  var m={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Firmado':'badge-firmado','OUT. Sin interés':'badge-out'};
+  var m={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Firmado':'badge-firmado','OUT. Sin interés':'badge-out','Extinguida':'badge-extinguida'};
   return`<span class="badge ${m[e]||'badge-sin'}">${e||'Sin contactar'}</span>`;
 }
 // ── Helpers de grupo + deduplicado (agregación de contactos/actividad/documentos por grupo) ──
@@ -3391,7 +3585,7 @@ function contarFiltrosActivos(ids){
 }
 
 function resetFiltros(){
-  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-mes'].forEach(function(id){
+  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por','cf-llamar'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   ['f-importe-min','f-importe-max','f-dias-min','cf-imp-min','cf-imp-max','cf-dias-min','cf-dias-max'].forEach(function(id){
@@ -3412,7 +3606,7 @@ function resetFiltrosAI(){
 }
 
 function resetFiltrosFs(){
-  ['fs-grupo','fs-tipo','fs-litros','fs-facturas','fs-responsable'].forEach(function(id){
+  ['fs-grupo','fs-tipo','fs-litros','fs-facturas','fs-responsable','ff-nombre','ff-tipo','ff-actividad','ff-act-desde','ff-act-hasta','ff-act-por','ff-litros','ff-facturas','ff-tarifarios','ff-cuentas','ff-fcomp','ff-pn','ff-imp-min','ff-imp-max'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   filtrarFirmados();
@@ -3663,6 +3857,7 @@ function abrirModalEditar(){
   document.getElementById('ed-responsable').value=c.responsable||'';
   document.getElementById('ed-grupo').value=c.grupo||'';
   document.getElementById('ed-canal').value=c.canal||'';
+  document.getElementById('ed-ccaa').value=c.ccaa||'';
   document.getElementById('ed-notas').value=c.situacion_previa||'';
   document.getElementById('ed-conocimiento').value=c.conocimiento_ieh||'';
   document.getElementById('ed-2013').value=c.importe_2013||'';
@@ -3698,6 +3893,7 @@ async function guardarEdicion(){
     responsable: document.getElementById('ed-responsable').value.trim()||null,
     grupo:     document.getElementById('ed-grupo').value.trim()||null,
     canal:     document.getElementById('ed-canal').value.trim()||null,
+    ccaa:      document.getElementById('ed-ccaa').value.trim()||null,
     situacion_previa: document.getElementById('ed-notas').value.trim()||null,
     conocimiento_ieh: document.getElementById('ed-conocimiento').value||null,
     importe_2013: parseFloat(document.getElementById('ed-2013').value)||null,
@@ -4895,6 +5091,155 @@ document.addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape')cerrarAsistenteIA();
 });
+/* ===================== MATRIZ DE IMPORTES ===================== */
+var _mxDatos = null;   // última matriz calculada (para exportar)
+
+function _mxCalcular(){
+  var estado = (document.getElementById('mx-estado')||{}).value || '';
+  var eje    = (document.getElementById('mx-eje')||{}).value || 'anyo';
+  var fuente = (document.getElementById('mx-fuente')||{}).value || 'todas';
+  var porCC  = !!(document.getElementById('mx-ccaa')||{}).checked;
+
+  var lista = (clientes||[]).filter(function(c){ return estado ? c.estado===estado : true; });
+  var recs  = _recPorCliente || {};
+
+  // Columnas
+  var cols;
+  if(eje==='anyo'){
+    cols = ['2013','2014','2015','2016','2017','2018'];
+  }else{
+    var set = {};
+    if(fuente!=='saras') lista.forEach(function(c){
+      (recs[c.id]||[]).forEach(function(r){ if(r.petrolera && r.petrolera!=='SARAS') set[r.petrolera]=true; });
+    });
+    cols = Object.keys(set).sort();
+    cols.unshift('SARAS');
+    if(fuente==='saras') cols = ['SARAS'];
+  }
+
+  // Filas
+  var filas = lista.map(function(c){
+    var v = {}, total = 0;
+    cols.forEach(function(k){ v[k]=0; });
+    if(eje==='anyo'){
+      ['2013','2014','2015','2016','2017','2018'].forEach(function(a){
+        var imp = parseFloat(c['importe_'+a])||0;                        // SARAS
+        if(fuente!=='saras'){
+          (recs[c.id]||[]).forEach(function(r){
+            if(String(r.anyo)===a && r.petrolera!=='SARAS') imp += parseFloat(r.importe)||0;
+          });
+        }
+        v[a]=imp; total+=imp;
+      });
+    }else{
+      var sar = parseFloat(c.importe_total)||0;
+      v['SARAS']=sar; total+=sar;
+      if(fuente!=='saras'){
+        (recs[c.id]||[]).forEach(function(r){
+          if(r.petrolera && r.petrolera!=='SARAS'){
+            var imp = parseFloat(r.importe)||0;
+            if(!(r.petrolera in v)) v[r.petrolera]=0;
+            v[r.petrolera]+=imp; total+=imp;
+          }
+        });
+      }
+    }
+    return { id:c.id, nombre:c.nombre||'—', ccaa:c.ccaa||'Sin asignar', estado:c.estado, v:v, total:total };
+  }).filter(function(f){ return f.total>0; })
+    .sort(function(a,b){ return b.total-a.total; });
+
+  // Totales por columna
+  var tot = {}; cols.forEach(function(k){ tot[k]=0; });
+  var gran = 0;
+  filas.forEach(function(f){ cols.forEach(function(k){ tot[k]+=(f.v[k]||0); }); gran+=f.total; });
+
+  _mxDatos = { cols:cols, filas:filas, tot:tot, gran:gran, eje:eje, estado:estado, fuente:fuente, porCC:porCC };
+  return _mxDatos;
+}
+
+function renderMatrizImportes(){
+  var el = document.getElementById('mx-body'); if(!el) return;
+  var d = _mxCalcular();
+
+  var k = document.getElementById('mx-kpis');
+  if(k) k.innerHTML =
+      '<span><b style="color:var(--text)">'+d.filas.length+'</b> clientes con importe</span>'
+    + '<span><b style="color:var(--text)">'+formatEur(d.gran)+'</b> principal total</span>'
+    + '<span><b style="color:var(--text)">'+d.cols.length+'</b> '+(d.eje==='anyo'?'ejercicios':'petroleras')+'</span>';
+
+  if(!d.filas.length){ el.innerHTML='<p style="color:var(--text3);font-size:13px">Sin clientes con importe para este filtro.</p>'; return; }
+
+  var th = 'padding:8px 10px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;background:var(--bg);position:sticky;top:0;z-index:2';
+  var td = 'padding:7px 10px;font-size:12.5px;border-top:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums';
+  var stick = 'position:sticky;left:0;background:var(--white);z-index:1;text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+
+  var h = '<table style="width:100%;border-collapse:collapse;min-width:720px">';
+  h += '<thead><tr><th style="'+th+';'+stick+';background:var(--bg)">Cliente</th>';
+  if(d.porCC) h += '<th style="'+th+';text-align:left">CCAA</th>';
+  d.cols.forEach(function(c){ h += '<th style="'+th+';text-align:right">'+esc(c)+'</th>'; });
+  h += '<th style="'+th+';text-align:right;color:var(--text)">Total</th></tr></thead><tbody>';
+
+  function pintaFila(f){
+    var r = '<tr><td style="'+td+';'+stick+'" title="'+esc(f.nombre)+'">'+esc(f.nombre)+'</td>';
+    if(d.porCC) r += '<td style="'+td+';text-align:left;color:var(--text3)">'+esc(f.ccaa)+'</td>';
+    d.cols.forEach(function(c){
+      var val = f.v[c]||0;
+      r += '<td style="'+td+'">'+(val?formatEurK(val):'<span style="color:var(--border)">—</span>')+'</td>';
+    });
+    r += '<td style="'+td+';font-weight:600">'+formatEurK(f.total)+'</td></tr>';
+    return r;
+  }
+
+  if(d.porCC){
+    var grupos = {};
+    d.filas.forEach(function(f){ (grupos[f.ccaa]=grupos[f.ccaa]||[]).push(f); });
+    Object.keys(grupos).sort(function(a,b){
+      var sa=grupos[a].reduce(function(x,f){return x+f.total;},0), sb=grupos[b].reduce(function(x,f){return x+f.total;},0);
+      return sb-sa;
+    }).forEach(function(cc){
+      var sub = grupos[cc], st = sub.reduce(function(x,f){return x+f.total;},0);
+      h += '<tr><td colspan="'+(d.cols.length+3)+'" style="padding:8px 10px;background:var(--blue-bg);font-size:11.5px;font-weight:600;color:var(--blue);border-top:1px solid var(--border)">'
+         + esc(cc)+' · '+sub.length+' cliente'+(sub.length>1?'s':'')+' · '+formatEur(st)+'</td></tr>';
+      sub.forEach(function(f){ h += pintaFila(f); });
+    });
+  }else{
+    d.filas.forEach(function(f){ h += pintaFila(f); });
+  }
+
+  h += '</tbody><tfoot><tr><td style="'+td+';'+stick+';font-weight:700;border-top:2px solid var(--border);background:var(--white)">TOTAL</td>';
+  if(d.porCC) h += '<td style="'+td+';border-top:2px solid var(--border)"></td>';
+  d.cols.forEach(function(c){ h += '<td style="'+td+';font-weight:700;border-top:2px solid var(--border)">'+formatEurK(d.tot[c]||0)+'</td>'; });
+  h += '<td style="'+td+';font-weight:700;border-top:2px solid var(--border)">'+formatEurK(d.gran)+'</td></tr></tfoot></table>';
+
+  el.innerHTML = h;
+}
+
+function exportarMatrizImportes(){
+  var d = _mxDatos || _mxCalcular();
+  if(!d || !d.filas.length){ alert('No hay datos que exportar con este filtro.'); return; }
+  var sep = ';';
+  function cell(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
+  function num(v){ return String((Math.round((v||0)*100)/100)).replace('.',','); }
+
+  var out = [];
+  out.push([cell('Cliente'), cell('CCAA'), cell('Estado')].concat(d.cols.map(cell)).concat([cell('Total')]).join(sep));
+  d.filas.forEach(function(f){
+    out.push([cell(f.nombre), cell(f.ccaa), cell(f.estado)]
+      .concat(d.cols.map(function(c){ return num(f.v[c]||0); }))
+      .concat([num(f.total)]).join(sep));
+  });
+  out.push([cell('TOTAL'), cell(''), cell('')]
+    .concat(d.cols.map(function(c){ return num(d.tot[c]||0); }))
+    .concat([num(d.gran)]).join(sep));
+
+  var nom = 'Matriz importes - ' + (d.estado||'toda la cartera') + ' - por ' + (d.eje==='anyo'?'ejercicio':'petrolera') + '.csv';
+  var blob = new Blob(['﻿'+out.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = nom;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+
 function escHTML(v){
   if(v===null||v===undefined)return '';
   return String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});
