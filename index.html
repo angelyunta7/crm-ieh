@@ -1511,12 +1511,23 @@ var MODO_EXTERNO=false;
 function tablaLecturaCliente(){return MODO_EXTERNO?'clientes_publico':'clientes';}
 function tablaEscrituraCliente(){return MODO_EXTERNO?'clientes_editable':'clientes';}
 function badgeNivel(n){n=Number(n)||0;var pc=n*10;return '<span class="nivel-badge" title="Prioridad '+n+' de 10" style="display:inline-block;min-width:40px;text-align:center;padding:2px 8px;border-radius:6px;font-weight:600;font-size:12px;background:linear-gradient(90deg,var(--accent2) '+pc+'%,var(--cream2) '+pc+'%);color:'+(n>=5?'#fff':'var(--text2)')+'">'+n+'/10</span>';}
+// Ficha del usuario (usuarios_rhj; la RLS solo deja leer la propia fila): modo externo,
+// persona RHJ (Ángel/Javier/Patricia) y rol. Así no hay emails de cuentas en este código público.
+var _personaUsuario='', _rolUsuario='';
 async function detectarModoExterno(email){
   try{
-    var r=await api('GET','/rest/v1/usuarios_rhj?select=ve_importes&email=eq.'+encodeURIComponent(email),null,true);
-    MODO_EXTERNO=!!(r&&r[0]&&r[0].ve_importes===false);
+    var r=await api('GET','/rest/v1/usuarios_rhj?select=ve_importes,persona,rol&email=eq.'+encodeURIComponent(email),null,true);
+    var f=(r&&r[0])||{};
+    MODO_EXTERNO=f.ve_importes===false;
+    _personaUsuario=f.persona||'';
+    _rolUsuario=f.rol||'';
   }catch(e){MODO_EXTERNO=false;}
   document.body.classList.toggle('modo-externo',MODO_EXTERNO);
+  if(_personaUsuario){
+    var un=document.getElementById('user-name'), ua=document.getElementById('user-avatar');
+    if(un) un.textContent=_personaUsuario;
+    if(ua) ua.textContent=_personaUsuario.slice(0,2).toUpperCase();
+  }
 }
 function aplicarModoExterno(){
   if(!MODO_EXTERNO)return;
@@ -3068,15 +3079,10 @@ function keyContacto(ct){return _norm(ct.nombre)+'|'+_norm(ct.email)+'|'+(_digit
 function keyActividad(a){var f=a.fecha?new Date(a.fecha).toISOString().slice(0,10):'';return f+'|'+_norm(a.tipo)+'|'+_norm(a.notas||a.asunto)+'|'+_norm(a.persona_rhj);}
 function keyDocumento(d){return _norm(d.nombre)+'|'+_norm(d.tipo);}
 function currentUserEmail(){try{var s=JSON.parse(localStorage.getItem('rhj_session')||'{}');if(s.email)return s.email;}catch(e){}return (session&&session.user&&session.user.email)||'—';}
-// Nombre por defecto para autoría (Responsable / Persona RHJ) según el correo con el que se ha entrado. Siempre editable en el formulario.
+// Nombre por defecto para autoría (Responsable / Persona RHJ): sale de usuarios_rhj.persona
+// (se carga al iniciar sesión en detectarModoExterno). Siempre editable en el formulario.
 var PERSONAS_RHJ = ['Ángel','Javier','Patricia'];
-function nombreUsuario(){
-  var e=currentUserEmail().toLowerCase();
-  if(e==='angelyunta7@gmail.com'||e==='angelyuntamansilla@gmail.com') return 'Ángel';
-  if(e==='info@rhj-consulting.com'||e==='jalbaresmansilla@gmail.com'||e==='jalbares@rhj-consulting.com') return 'Javier';
-  if(e==='pmartinez@rhj-consulting.com') return 'Patricia';
-  return '';
-}
+function nombreUsuario(){ return _personaUsuario||''; }
 async function getGrupoMemberIds(c){
   if(!c||!c.grupo||!String(c.grupo).trim())return[c.id];
   var rows=await api('GET','/rest/v1/'+tablaLecturaCliente()+'?grupo=eq.'+encodeURIComponent(c.grupo)+'&select=id',null,true).catch(function(){return null;});
@@ -3130,7 +3136,7 @@ async function borrarDuplicado(contactoId){
 }
 
 // ── Gestión de usuarios (panel admin) — llama a la edge function admin-users ──
-function esAdmin(){return currentUserEmail().toLowerCase()==='angelyunta7@gmail.com';}
+function esAdmin(){return _rolUsuario==='admin';}   // el servidor (edge admin-users) vuelve a comprobarlo
 async function adminUsersCall(action,payload){
   var r=await fetch(SUPABASE_URL+'/functions/v1/admin-users',{
     method:'POST',
