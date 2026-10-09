@@ -638,7 +638,7 @@ tbody td{padding:10px 14px;font-size:13px}
                 <th></th>
                 <th><input type="date" id="cf-act-desde" title="Última actividad DESDE esta fecha" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2);margin-bottom:2px"><input type="date" id="cf-act-hasta" title="Última actividad HASTA esta fecha (incluye los que no tienen actividad)" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2)"><div style="font-size:9px;color:var(--text3);margin-top:1px">desde / hasta</div></th>
                 <th><select id="cf-act-por" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option><option value="Otros">Otros</option><option value="__sin">Sin actividad</option></select></th>
-                <th><select id="cf-llamar" onchange="filtrar()"><option value="">Todas</option><option value="vencidas">Vencidas</option><option value="hoy">Hoy</option><option value="semana">Próx. 7 días</option><option value="con">Con fecha</option><option value="sin">Sin fecha</option></select></th>
+                <th><select id="cf-llamar" onchange="filtrar()"><option value="">Todas</option><option value="vencidas">Vencidas</option><option value="hoy">Hoy</option><option value="semana">Próx. 7 días</option><option value="con">Con fecha</option><option value="sin">Sin fecha</option></select><input type="date" id="cf-llamar-dia" title="Llamadas de un día concreto" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2);margin-top:2px"><div style="font-size:9px;color:var(--text3);margin-top:1px">o un día concreto</div></th>
                 <th class="col-dias"><div class="col-num-range"><input type="number" id="cf-dias-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-dias-max" placeholder="máx" oninput="filtrar()"></div></th>
                 <th class="col-hide-mobile"><select id="cf-responsable" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option></select></th>
               </tr>
@@ -1961,6 +1961,7 @@ function filtrar(){
   var cfActDesde=_tsDia(getVal('cf-act-desde'),false), cfActHasta=_tsDia(getVal('cf-act-hasta'),true);
   var cfActPor=getVal('cf-act-por');
   var cfLlamar=getVal('cf-llamar');
+  var cfLlamarDia=getVal('cf-llamar-dia');
 
   clientesFiltrados=clientes.filter(function(c){
     if(q&&!_clienteCoincide(c,q))return false;
@@ -1990,6 +1991,7 @@ function filtrar(){
     }
     if(!_pasaFiltroActividad(c,cfActDesde,cfActHasta,cfActPor)) return false;
     if(cfLlamar && !_pasaFiltroLlamar(c.fecha_llamar,cfLlamar)) return false;
+    if(cfLlamarDia && c.fecha_llamar!==cfLlamarDia) return false;
     if(_soloNoFirmados && c.estado==='Firmado') return false;
     return true;
   });
@@ -2383,7 +2385,7 @@ async function abrirFicha(id){
   var c=clientes.find(function(x){return x.id===id;});
   if(!c)return;
   _clienteActivoId = id;
-  document.getElementById('ficha-nombre').textContent=c.nombre;
+  _pintarNombreFicha(c);
   document.getElementById('ficha-meta').textContent=(c.cif||'—')+' · '+(c.tipo||'—')+(c.canal?' · '+c.canal:'');
   // Mostrar skeleton mientras carga el cuerpo
   document.getElementById('ficha-body').innerHTML='<div style="padding:20px"><div style="height:14px;background:var(--cream2);border-radius:4px;margin-bottom:12px;width:60%"></div><div style="height:14px;background:var(--cream2);border-radius:4px;margin-bottom:12px;width:80%"></div><div style="height:14px;background:var(--cream2);border-radius:4px;width:40%"></div></div>';
@@ -2661,6 +2663,25 @@ async function abrirFicha(id){
   if(c.estado==='Firmado')setTimeout(function(){cargarFacturasAnyo(id);},200);
 }
 
+// Nombre de la empresa en la cabecera de la ficha + botón para renombrarla
+function _pintarNombreFicha(c){
+  var el=document.getElementById('ficha-nombre'); if(!el||!c) return;
+  el.innerHTML=esc(c.nombre)+' <button class="btn-icon btn-xs" title="Cambiar el nombre de la empresa" onclick="renombrarCliente(\''+c.id+'\')" style="margin-left:4px;vertical-align:middle">✎</button>';
+}
+async function renombrarCliente(id){
+  var c=clientes.find(function(x){return x.id===id;}); if(!c) return;
+  var nuevo=prompt('Nuevo nombre de la empresa:', c.nombre||'');
+  if(nuevo===null) return;
+  nuevo=nuevo.trim();
+  if(!nuevo){ showToast('El nombre no puede quedar vacío','error'); return; }
+  if(nuevo===c.nombre) return;
+  try{
+    await api('PATCH','/rest/v1/'+tablaEscrituraCliente()+'?id=eq.'+id,{nombre:nuevo, updated_at:new Date().toISOString()});
+    c.nombre=nuevo;
+    _pintarNombreFicha(c);
+    showToast('Nombre actualizado','success');
+  }catch(e){ showToast('Error: '+e.message,'error'); }
+}
 function cerrarFicha(){document.getElementById('ficha-overlay').classList.remove('open');if(typeof autoRefrescar==='function')setTimeout(function(){autoRefrescar(true);},50);}
 
 async function cambiarConocimiento(id, valor){
@@ -2917,11 +2938,12 @@ function openModalContacto(clienteId){
   var ov=document.getElementById('modal-contacto-nuevo');
   if(!ov){
     ov=document.createElement('div');
-    ov.id='modal-contacto-nuevo'; ov.className='modal';
-    ov.innerHTML='<div class="modal-content" style="max-width:460px">'
-      +'<div class="modal-header"><h3 style="margin:0">Nuevo contacto</h3>'
-      +'<button class="btn-icon" onclick="closeModal(\'modal-contacto-nuevo\')">&#10005;</button></div>'
-      +'<div class="modal-body">'
+    // OJO: 'modal-overlay' (fijo, z-index 300) es lo que lo pone centrado y POR ENCIMA de la ficha (z-index 200).
+    ov.id='modal-contacto-nuevo'; ov.className='modal-overlay';
+    ov.innerHTML='<div class="modal" style="width:460px">'
+      +'<div class="modal-title" style="display:flex;align-items:center;justify-content:space-between">Nuevo contacto'
+      +'<button class="btn-icon" title="Cerrar" onclick="closeModal(\'modal-contacto-nuevo\')">&#10005;</button></div>'
+      +'<div>'
       +'<p style="margin:0 0 14px;font-size:12.5px;color:var(--text3)">Rellena al menos un dato. Todos son opcionales.</p>'
       +'<div class="form-field" style="margin-bottom:10px"><label>Nombre</label><input type="text" id="mcn-nombre" placeholder="Nombre y apellidos"></div>'
       +'<div class="form-field" style="margin-bottom:10px"><label>Cargo</label><input type="text" id="mcn-cargo" placeholder="Ej: Responsable de compras"></div>'
@@ -2930,9 +2952,10 @@ function openModalContacto(clienteId){
       +'<div class="form-field"><label>M&#243;vil</label><input type="tel" id="mcn-movil" placeholder="600 000 000"></div></div>'
       +'<div class="form-field" style="margin-bottom:4px"><label>Email</label><input type="email" id="mcn-email" placeholder="nombre@empresa.com"></div>'
       +'</div>'
-      +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal(\'modal-contacto-nuevo\')">Cancelar</button>'
-      +'<button class="btn btn-primary" id="mcn-guardar">Guardar contacto</button></div></div>';
+      +'<div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal(\'modal-contacto-nuevo\')">Cancelar</button>'
+      +'<button class="btn btn-accent" id="mcn-guardar">Guardar contacto</button></div></div>';
     document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){ if(e.target===ov) closeModal('modal-contacto-nuevo'); });   // clic fuera = cerrar
   }
   ['mcn-nombre','mcn-cargo','mcn-telefono','mcn-movil','mcn-email'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.value='';
@@ -3591,7 +3614,7 @@ function contarFiltrosActivos(ids){
 }
 
 function resetFiltros(){
-  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por','cf-llamar'].forEach(function(id){
+  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por','cf-llamar','cf-llamar-dia'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   ['f-importe-min','f-importe-max','f-dias-min','cf-imp-min','cf-imp-max','cf-dias-min','cf-dias-max'].forEach(function(id){
