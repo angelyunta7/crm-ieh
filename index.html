@@ -548,6 +548,8 @@ tbody td{padding:10px 14px;font-size:13px}
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
               Filtros <span id="filtros-main-count" style="display:none;background:var(--accent);color:var(--white);border-radius:10px;padding:0 5px;font-size:10px;margin-left:2px"></span>
             </button>
+            <button class="btn-filtros" id="btn-cal-llamadas" title="Calendario de próximas llamadas" onclick="abrirCalLlamadas(this)">📅 Llamadas</button>
+            <span id="chip-llamada" class="chip-filtro" style="display:none;margin-left:auto"></span>
             <span id="total-count" style="font-size:12px;color:var(--text3);white-space:nowrap;margin-left:auto"></span>
           </div>
           <div class="filtros-panel" id="filtros-main">
@@ -624,7 +626,7 @@ tbody td{padding:10px 14px;font-size:13px}
                 <th onclick="ordenarCol('cli','updated_at')">Último contacto<span class="sort-arrow" data-col="cli-updated_at"></span></th>
                 <th onclick="ordenarCol('cli','actividad')">Última actividad<span class="sort-arrow" data-col="cli-actividad"></span></th>
                 <th onclick="ordenarCol('cli','act_por')">Actividad por<span class="sort-arrow" data-col="cli-act_por"></span></th>
-                <th onclick="ordenarCol('cli','fecha_llamar')">Próxima llamada<span class="sort-arrow" data-col="cli-fecha_llamar"></span></th>
+                <th onclick="ordenarCol('cli','fecha_llamar')">Próxima llamada<span class="sort-arrow" data-col="cli-fecha_llamar"></span><button type="button" class="cal-btn" title="Calendario de llamadas" onclick="event.stopPropagation();abrirCalLlamadas(this)">📅</button></th>
                 <th class="col-dias" onclick="ordenarCol('cli','dias')">Días sin contacto<span class="sort-arrow" data-col="cli-dias"></span></th>
                 <th class="col-hide-mobile" onclick="ordenarCol('cli','responsable')">Responsable<span class="sort-arrow" data-col="cli-responsable"></span></th>
               </tr>
@@ -638,7 +640,7 @@ tbody td{padding:10px 14px;font-size:13px}
                 <th></th>
                 <th><input type="date" id="cf-act-desde" title="Última actividad DESDE esta fecha" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2);margin-bottom:2px"><input type="date" id="cf-act-hasta" title="Última actividad HASTA esta fecha (incluye los que no tienen actividad)" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2)"><div style="font-size:9px;color:var(--text3);margin-top:1px">desde / hasta</div></th>
                 <th><select id="cf-act-por" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option><option value="Otros">Otros</option><option value="__sin">Sin actividad</option></select></th>
-                <th><select id="cf-llamar" onchange="filtrar()"><option value="">Todas</option><option value="vencidas">Vencidas</option><option value="hoy">Hoy</option><option value="semana">Próx. 7 días</option><option value="con">Con fecha</option><option value="sin">Sin fecha</option></select><input type="date" id="cf-llamar-dia" title="Llamadas de un día concreto" onchange="filtrar()" style="width:100%;font-size:11px;color:var(--text2);margin-top:2px"><div style="font-size:9px;color:var(--text3);margin-top:1px">o un día concreto</div></th>
+                <th><button type="button" id="cf-llamar-btn" class="cal-filtro-btn" title="Filtrar por fecha de llamada" onclick="abrirCalLlamadas(this)"><span>📅 <span id="cf-llamar-txt">Todas</span></span><span>▾</span></button></th>
                 <th class="col-dias"><div class="col-num-range"><input type="number" id="cf-dias-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-dias-max" placeholder="máx" oninput="filtrar()"></div></th>
                 <th class="col-hide-mobile"><select id="cf-responsable" onchange="filtrar()"><option value="">Todos</option><option>Ángel</option><option>Javier</option><option>Patricia</option></select></th>
               </tr>
@@ -1496,6 +1498,40 @@ body.modo-externo #ff-imp-min, body.modo-externo #ff-imp-max{display:none;}
 .tbl-scroll::-webkit-scrollbar-thumb:hover{background:#a8a196;background-clip:padding-box}
 .tbl-scroll::-webkit-scrollbar-track{background:rgba(0,0,0,.04)}
 body.modo-externo #view-firmados .tbl{min-width:1150px}
+/* ── Calendario de "Próxima llamada" ── */
+.cal-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;margin-left:3px;opacity:.7;line-height:1}
+.cal-btn:hover{opacity:1}
+.cal-filtro-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;overflow:hidden;font-family:inherit}
+.cal-filtro-btn span{overflow:hidden;text-overflow:ellipsis}
+.cal-filtro-btn.activo{border-color:var(--accent);color:var(--accent);font-weight:600}
+.chip-filtro{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;border-radius:20px;background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:500;white-space:nowrap}
+.chip-filtro button{background:none;border:none;cursor:pointer;color:inherit;font-size:13px;line-height:1;padding:0 3px;border-radius:50%}
+.chip-filtro button:hover{background:rgba(0,0,0,.08)}
+.cal-pop{position:fixed;z-index:350;display:none;width:304px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-md);padding:12px;font-size:12px;color:var(--text)}
+.cal-pop.open{display:block}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-head .cal-mes{font-weight:600;font-size:13px}
+.cal-nav{background:var(--white);border:1px solid var(--border);border-radius:6px;width:28px;height:28px;cursor:pointer;color:var(--text2);font-size:14px;line-height:1}
+.cal-nav:hover{border-color:var(--accent);color:var(--accent)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{text-align:center;font-size:10px;color:var(--text3);font-weight:600;padding:2px 0 4px}
+.cal-dia{position:relative;height:36px;border:1px solid transparent;border-radius:7px;background:none;cursor:pointer;font-family:inherit;font-size:12px;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0}
+.cal-dia:hover{border-color:var(--border);background:var(--cream2)}
+.cal-dia .cal-n{min-width:16px;padding:0 4px;border-radius:8px;font-size:9.5px;font-weight:700;line-height:14px;background:var(--blue-bg);color:var(--blue)}
+.cal-dia.vencido .cal-n{background:var(--red-bg);color:var(--red)}
+.cal-dia.hoy{border-color:var(--accent);font-weight:700}
+.cal-dia.hoy .cal-n{background:var(--amber-bg);color:var(--amber)}
+.cal-dia.pasado{color:var(--text3)}
+.cal-dia.sel{background:var(--accent);color:var(--white);border-color:var(--accent)}
+.cal-dia.sel .cal-n{background:rgba(255,255,255,.25);color:var(--white)}
+.cal-dia.ini{outline:2px dashed var(--accent);outline-offset:1px}
+.cal-atajos{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.cal-atajo{border:1px solid var(--border);background:var(--white);border-radius:14px;padding:4px 9px;font-size:11px;cursor:pointer;color:var(--text2);font-family:inherit}
+.cal-atajo:hover,.cal-atajo.on{border-color:var(--accent);color:var(--accent)}
+.cal-atajo.on{font-weight:600}
+.cal-atajo .n{color:var(--text3);font-weight:400}
+.cal-pie{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;font-size:10.5px;color:var(--text3)}
+@media(max-width:768px){.cal-pop{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:64px!important;max-height:80vh;overflow-y:auto}.cal-dia{height:42px}}
 </style>
 <nav class="mobile-nav"><button class="mobile-nav-btn active" onclick="mobileNav('dashboard',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</button><button class="mobile-nav-btn" onclick="mobileNav('clientes',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clientes</button><button class="mobile-nav-btn nav-externo" style="display:none" onclick="verNoFirmadosMobile(this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="8"/></svg>No firmados</button><button class="mobile-nav-btn" onclick="mobileNav('altointeres',this)"><span class="mnav-badge" id="mnav-bi">0</span><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Interés</button><button class="mobile-nav-btn" onclick="mobileNav('firmados',this)"><span class="mnav-badge" id="mnav-bf">0</span><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Firmados</button><button class="mobile-nav-btn" onclick="mobileNav('analisis',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>An&#225;lisis</button><button class="mobile-nav-btn" onclick="mobileNav('sentencias',this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Sentencias</button></nav>
 
@@ -1881,6 +1917,127 @@ function badgePersona(c){
   var txt=por==='Otros'?(c._ultima_act_persona||'Otros'):por;
   return '<span title="'+esc(c._ultima_act_persona||'')+'" style="background:'+col[0]+';color:'+col[1]+';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap">'+esc(txt)+'</span>';
 }
+// ── Filtro "Próxima llamada": calendario mensual con contadores, rango y atajos ──
+// Estado: null = sin filtro; {modo:'dia'|'rango'|'vencidas'|'sin', desde, hasta, etiqueta, atajo}
+var _filtroLlamada=null, _calMes=null, _calSelIni=null;
+function _fmtDiaES(iso){ var p=String(iso).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function _pasaFiltroLlamada(f){
+  var F=_filtroLlamada; if(!F) return true;
+  if(F.modo==='sin') return !f;
+  if(!f) return false;
+  if(F.modo==='vencidas') return f<_hoyISO();
+  return f>=F.desde && f<=F.hasta;
+}
+// Base para los contadores: los clientes cargados (en modo externo, ya es la vista sin importes)
+function _clientesBaseCal(){ return clientes.filter(function(c){ return !(_soloNoFirmados && c.estado==='Firmado'); }); }
+function _conteoLlamadas(){
+  var m={}, venc=0, sin=0, hoy=_hoyISO();
+  _clientesBaseCal().forEach(function(c){
+    var f=c.fecha_llamar;
+    if(!f){ sin++; return; }
+    m[f]=(m[f]||0)+1;
+    if(f<hoy) venc++;
+  });
+  return {dias:m, vencidas:venc, sin:sin};
+}
+function fijarFiltroLlamada(F, sinFiltrar){
+  _filtroLlamada=F||null; _calSelIni=null;
+  var t=document.getElementById('cf-llamar-txt'); if(t) t.textContent=F?F.etiqueta:'Todas';
+  var b=document.getElementById('cf-llamar-btn'); if(b) b.classList.toggle('activo',!!F);
+  var chip=document.getElementById('chip-llamada');
+  if(chip){
+    if(F){ chip.innerHTML='📅 Llamada: '+esc(F.etiqueta)+'<button type="button" title="Quitar este filtro" onclick="fijarFiltroLlamada(null)">✕</button>'; chip.style.display='inline-flex'; }
+    else { chip.innerHTML=''; chip.style.display='none'; }
+  }
+  if(!sinFiltrar) filtrar();
+  var pop=document.getElementById('cal-llamadas'); if(pop && pop.classList.contains('open')) pintarCalLlamadas();
+}
+function atajoLlamada(tipo){
+  var hoy=_hoyISO();
+  if(tipo==='hoy') return fijarFiltroLlamada({modo:'dia',desde:hoy,hasta:hoy,etiqueta:'Hoy ('+_fmtDiaES(hoy)+')',atajo:'hoy'});
+  if(tipo==='manana'){ var m=_isoMasDias(1); return fijarFiltroLlamada({modo:'dia',desde:m,hasta:m,etiqueta:'Mañana ('+_fmtDiaES(m)+')',atajo:'manana'}); }
+  if(tipo==='semana'){ // semana natural, de lunes a domingo
+    var d=new Date(), ini=new Date(d.getFullYear(),d.getMonth(),d.getDate()-((d.getDay()+6)%7)), fin=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()+6);
+    return fijarFiltroLlamada({modo:'rango',desde:_isoLocal(ini),hasta:_isoLocal(fin),etiqueta:'Esta semana',atajo:'semana'});
+  }
+  if(tipo==='7dias') return fijarFiltroLlamada({modo:'rango',desde:hoy,hasta:_isoMasDias(7),etiqueta:'Próximos 7 días',atajo:'7dias'});
+  if(tipo==='vencidas') return fijarFiltroLlamada({modo:'vencidas',etiqueta:'Vencidas',atajo:'vencidas'});
+  if(tipo==='sin') return fijarFiltroLlamada({modo:'sin',etiqueta:'Sin fecha',atajo:'sin'});
+}
+// 1er clic = ese día (y queda marcado como inicio de rango); 2º clic en otro día = rango entre ambos
+function clicDiaCal(iso){
+  if(!_calSelIni){
+    fijarFiltroLlamada({modo:'dia',desde:iso,hasta:iso,etiqueta:_fmtDiaES(iso)});
+    _calSelIni=iso; pintarCalLlamadas();
+    return;
+  }
+  var a=_calSelIni<iso?_calSelIni:iso, b=_calSelIni<iso?iso:_calSelIni;
+  if(a===b) fijarFiltroLlamada({modo:'dia',desde:a,hasta:a,etiqueta:_fmtDiaES(a)});
+  else fijarFiltroLlamada({modo:'rango',desde:a,hasta:b,etiqueta:_fmtDiaES(a)+' – '+_fmtDiaES(b)});
+}
+function moverMesCal(n){ _calMes=new Date(_calMes.getFullYear(),_calMes.getMonth()+n,1); pintarCalLlamadas(); }
+function irHoyCal(){ var d=new Date(); _calMes=new Date(d.getFullYear(),d.getMonth(),1); pintarCalLlamadas(); }
+function pintarCalLlamadas(){
+  var pop=document.getElementById('cal-llamadas'); if(!pop) return;
+  var C=_conteoLlamadas(), hoy=_hoyISO(), F=_filtroLlamada;
+  var y=_calMes.getFullYear(), mes=_calMes.getMonth();
+  var nombreMes=_calMes.toLocaleDateString('es-ES',{month:'long',year:'numeric'}); nombreMes=nombreMes.charAt(0).toUpperCase()+nombreMes.slice(1);   // "Octubre de 2026"
+  var hueco=(new Date(y,mes,1).getDay()+6)%7, diasMes=new Date(y,mes+1,0).getDate();
+  var enRango=function(iso){ return F && (F.modo==='dia'||F.modo==='rango') && iso>=F.desde && iso<=F.hasta; };
+  var h='<div class="cal-head"><button type="button" class="cal-nav" title="Mes anterior" onclick="moverMesCal(-1)">‹</button>'
+    +'<span class="cal-mes">'+esc(nombreMes)+'</span>'
+    +'<button type="button" class="cal-nav" title="Mes siguiente" onclick="moverMesCal(1)">›</button></div>'
+    +'<div class="cal-grid">'+['L','M','X','J','V','S','D'].map(function(d){return '<div class="cal-dow">'+d+'</div>';}).join('');
+  for(var i=0;i<hueco;i++) h+='<div></div>';
+  for(var d=1; d<=diasMes; d++){
+    var iso=_isoLocal(new Date(y,mes,d)), n=C.dias[iso]||0, cls='cal-dia';
+    if(iso===hoy) cls+=' hoy'; else if(iso<hoy) cls+=' pasado';
+    if(n && iso<hoy) cls+=' vencido';
+    if(enRango(iso)) cls+=' sel';
+    if(iso===_calSelIni) cls+=' ini';
+    var tit=_fmtDiaES(iso)+(n?' · '+n+(n===1?' llamada':' llamadas'):' · sin llamadas')+(n&&iso<hoy?' (vencidas)':'');
+    h+='<button type="button" class="'+cls+'" title="'+tit+'" onclick="clicDiaCal(\''+iso+'\')"><span>'+d+'</span>'+(n?'<span class="cal-n">'+n+'</span>':'')+'</button>';
+  }
+  h+='</div>';
+  var at=F&&F.atajo;
+  function A(k,txt,num){ return '<button type="button" class="cal-atajo'+(at===k?' on':'')+'" onclick="atajoLlamada(\''+k+'\')">'+txt+(num!=null?' <span class="n">'+num+'</span>':'')+'</button>'; }
+  var nHoy=C.dias[hoy]||0, nMan=C.dias[_isoMasDias(1)]||0, n7=0;
+  for(var k=0;k<=7;k++){ n7+=C.dias[_isoMasDias(k)]||0; }
+  h+='<div class="cal-atajos">'+A('hoy','Hoy',nHoy)+A('manana','Mañana',nMan)+A('semana','Esta semana')+A('7dias','Próx. 7 días',n7)+A('vencidas','Vencidas',C.vencidas)+A('sin','Sin fecha',C.sin)+'</div>';
+  h+='<div class="cal-pie"><span>'+(_calSelIni?'Pulsa otro día para un rango':'Clic en un día · dos días = rango')+'</span>'
+    +'<span style="display:flex;gap:6px"><button type="button" class="cal-atajo" onclick="irHoyCal()">Ir a hoy</button>'
+    +'<button type="button" class="cal-atajo" onclick="fijarFiltroLlamada(null)">Limpiar</button></span></div>';
+  pop.innerHTML=h;
+}
+function abrirCalLlamadas(anchor){
+  var pop=document.getElementById('cal-llamadas');
+  if(!pop){
+    pop=document.createElement('div'); pop.id='cal-llamadas'; pop.className='cal-pop';
+    pop.setAttribute('role','dialog'); pop.setAttribute('aria-label','Calendario de próximas llamadas');
+    document.body.appendChild(pop);
+    document.addEventListener('mousedown',function(e){
+      var p=document.getElementById('cal-llamadas');
+      if(p && p.classList.contains('open') && !p.contains(e.target) && !(e.target.closest && e.target.closest('.cal-btn,.cal-filtro-btn,#btn-cal-llamadas'))) cerrarCalLlamadas();
+    });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') cerrarCalLlamadas(); });
+    window.addEventListener('resize',function(){ var p=document.getElementById('cal-llamadas'); if(p&&p.classList.contains('open')&&p._anchor) _posicionarCal(p,p._anchor); });
+  }
+  if(pop.classList.contains('open') && pop._anchor===anchor){ cerrarCalLlamadas(); return; }
+  pop._anchor=anchor;
+  var base=(_filtroLlamada&&_filtroLlamada.desde)?_filtroLlamada.desde:_hoyISO(), p=base.split('-');
+  _calMes=new Date(+p[0],(+p[1])-1,1);
+  pintarCalLlamadas();
+  pop.classList.add('open');
+  _posicionarCal(pop,anchor);
+}
+function _posicionarCal(pop,anchor){
+  if(window.innerWidth<=768){ pop.style.left=''; pop.style.top=''; return; }   // móvil: ancho completo por CSS
+  var r=anchor.getBoundingClientRect(), w=pop.offsetWidth||304, hh=pop.offsetHeight||380;
+  var left=Math.max(8, Math.min(r.left, window.innerWidth-w-8));
+  var top=r.bottom+6; if(top+hh>window.innerHeight-8) top=Math.max(8, r.top-hh-6);
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+}
+function cerrarCalLlamadas(){ var p=document.getElementById('cal-llamadas'); if(p) p.classList.remove('open'); _calSelIni=null; }
 function badgeLlamar(f){
   if(!f) return '<span style="color:var(--text3);font-size:12px">—</span>';
   var hoy=_hoyISO(), p=String(f).split('-'), txt=p[2]+'/'+p[1]+'/'+p[0], bg, co, ic='';
@@ -1960,8 +2117,6 @@ function filtrar(){
   // Filtro por última actividad: rango de fechas (desde / hasta) y persona que la hizo
   var cfActDesde=_tsDia(getVal('cf-act-desde'),false), cfActHasta=_tsDia(getVal('cf-act-hasta'),true);
   var cfActPor=getVal('cf-act-por');
-  var cfLlamar=getVal('cf-llamar');
-  var cfLlamarDia=getVal('cf-llamar-dia');
 
   clientesFiltrados=clientes.filter(function(c){
     if(q&&!_clienteCoincide(c,q))return false;
@@ -1990,8 +2145,7 @@ function filtrar(){
       if(cfDiasMax!==null&&dd>cfDiasMax)return false;
     }
     if(!_pasaFiltroActividad(c,cfActDesde,cfActHasta,cfActPor)) return false;
-    if(cfLlamar && !_pasaFiltroLlamar(c.fecha_llamar,cfLlamar)) return false;
-    if(cfLlamarDia && c.fecha_llamar!==cfLlamarDia) return false;
+    if(!_pasaFiltroLlamada(c.fecha_llamar)) return false;
     if(_soloNoFirmados && c.estado==='Firmado') return false;
     return true;
   });
@@ -3614,13 +3768,14 @@ function contarFiltrosActivos(ids){
 }
 
 function resetFiltros(){
-  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por','cf-llamar','cf-llamar-dia'].forEach(function(id){
+  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   ['f-importe-min','f-importe-max','f-dias-min','cf-imp-min','cf-imp-max','cf-dias-min','cf-dias-max'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   _ordenCol.cli={col:null,dir:1}; _pintarFlechas('cli');
+  fijarFiltroLlamada(null,true);
   filtrar();
 }
 
