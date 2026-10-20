@@ -5148,7 +5148,7 @@ function renderMatriz(){
       // Iconos
       var tieneFact = anyo ? (facAnyo[parseInt(anyo)]===true) : Object.values(facAnyo).some(Boolean);
       var completas = c.facturas_completas==='S\u00ed';
-      var pnOk      = c.poder_notarial_solicitado==='S\u00ed'||c.poder_notarial_compartido==='S\u00ed';
+      var pnOk      = c.poder_notarial==='Compartido'; // campo unificado (antes leía los campos antiguos _solicitado/_compartido)
 
       function icono(ok, maybe, emoji, label){
         var op = ok ? '1' : (maybe ? '0.8' : '0.25');
