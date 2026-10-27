@@ -568,8 +568,6 @@ tbody td{padding:10px 14px;font-size:13px}
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Tipo</label>
                 <select id="f-tipo" onchange="filtrar()">
                   <option value="">Todos</option>
-                  <option value="Wholesale">Wholesale</option>
-                  <option value="Abanderado">Abanderado</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Conocimiento IEH</label>
@@ -633,7 +631,7 @@ tbody td{padding:10px 14px;font-size:13px}
               <tr class="filter-row">
                 <th><input type="text" id="cf-nombre" placeholder="Filtrar..." oninput="filtrar()"></th>
                 <th><input type="text" id="cf-cif" placeholder="Filtrar..." oninput="filtrar()"></th>
-                <th><select id="cf-tipo" onchange="filtrar()"><option value="">Todos</option><option>Wholesale</option><option>Abanderado</option></select></th>
+                <th><select id="cf-tipo" onchange="filtrar()"><option value="">Todos</option></select></th>
                 <th><select id="cf-estado" onchange="filtrar()"><option value="">Todos</option><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option><option value="Firmado">Firmado</option><option value="OUT. Sin interés">OUT</option><option value="Extinguida">Extinguida</option></select></th>
                 <th><select id="cf-conocimiento" onchange="filtrar()"><option value="">Todos</option><option>Nulo</option><option>Medio</option><option>Alto</option></select></th>
                 <th><div class="col-num-range"><input type="number" id="cf-imp-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-imp-max" placeholder="máx" oninput="filtrar()"></div></th>
@@ -705,8 +703,6 @@ tbody td{padding:10px 14px;font-size:13px}
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Tipo</label>
                 <select id="ai-tipo" onchange="filtrarAI()">
                   <option value="">Todos</option>
-                  <option value="Wholesale">Wholesale</option>
-                  <option value="Abanderado">Abanderado</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Conocimiento IEH</label>
@@ -779,8 +775,6 @@ tbody td{padding:10px 14px;font-size:13px}
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Tipo</label>
                 <select id="fs-tipo" onchange="filtrarFirmados()">
                   <option value="">Todos</option>
-                  <option value="Wholesale">Wholesale</option>
-                  <option value="Abanderado">Abanderado</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Litros</label>
@@ -831,7 +825,7 @@ tbody td{padding:10px 14px;font-size:13px}
               </tr>
               <tr class="filter-row">
                 <th><input type="text" id="ff-nombre" placeholder="Filtrar..." oninput="filtrarFirmados()"></th>
-                <th><select id="ff-tipo" onchange="filtrarFirmados()"><option value="">Todos</option><option>Wholesale</option><option>Abanderado</option></select></th>
+                <th><select id="ff-tipo" onchange="filtrarFirmados()"><option value="">Todos</option></select></th>
                 <th></th>
                 <th><div class="col-num-range"><input type="number" id="ff-imp-min" placeholder="mín" oninput="filtrarFirmados()"><input type="number" id="ff-imp-max" placeholder="máx" oninput="filtrarFirmados()"></div></th>
                 <th></th>
@@ -1189,7 +1183,7 @@ tbody td{padding:10px 14px;font-size:13px}
       <div class="form-field"><label>CIF</label><input type="text" id="nc-cif" placeholder="A12345678"></div>
     </div>
     <div class="form-row">
-      <div class="form-field"><label>Tipo</label><select id="nc-tipo"><option value="Wholesale">Wholesale</option><option value="Abanderado">Abanderado</option><option value="Otro">Otro</option></select></div>
+      <div class="form-field"><label>Tipo</label><select id="nc-tipo"></select></div>
       <div class="form-field"><label>Estado</label><select id="nc-estado"><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option></select></div>
     </div>
     <div class="form-row">
@@ -1299,11 +1293,7 @@ tbody td{padding:10px 14px;font-size:13px}
     </div>
     <div class="form-row">
       <div class="form-field"><label>Tipo</label>
-        <select id="ed-tipo">
-          <option value="Wholesale">Wholesale</option>
-          <option value="Abanderado">Abanderado</option>
-          <option value="Otro">Otro</option>
-        </select>
+        <select id="ed-tipo"></select>
       </div>
       <div class="form-field"><label>Responsable</label><input type="text" id="ed-responsable" placeholder="Ángel / Javier"></div>
     </div>
@@ -1801,7 +1791,29 @@ async function _fetchClientesAll(){
   return todos;
 }
 // Repinta todo lo que depende de `clientes` (lista, dashboard, badges, firmados)
+// «Tipo» = bandera de la sociedad en enero de 2019 (Wholesale = blanca / compra al por mayor; Saras = antes «Abanderado»).
+// Los desplegables se rellenan con esta lista + cualquier otro valor que ya exista en la base.
+var TIPOS_BASE=['Wholesale','Saras','Repsol','Moeve','BP','Galp','Shell','Disa','Avia','Meroil','Varias banderas','Otro'];
+function tiposDisponibles(){
+  var extra={}; (clientes||[]).forEach(function(c){ if(c.tipo&&TIPOS_BASE.indexOf(c.tipo)<0) extra[c.tipo]=1; });
+  return TIPOS_BASE.concat(Object.keys(extra).sort());
+}
+function rellenarTipos(){
+  var usados={}; (clientes||[]).forEach(function(c){ if(c.tipo) usados[c.tipo]=(usados[c.tipo]||0)+1; });
+  var todos=tiposDisponibles();
+  ['f-tipo','cf-tipo','ai-tipo','fs-tipo','ff-tipo'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return; var v=el.value;
+    el.innerHTML='<option value="">Todos</option>'+todos.filter(function(t){return usados[t];}).map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+' ('+usados[t]+')</option>';}).join('');
+    el.value=v;
+  });
+  ['nc-tipo','ed-tipo'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return; var v=el.value;
+    el.innerHTML=todos.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+'</option>';}).join('');
+    if(v) el.value=v;
+  });
+}
 function _renderClientes(){
+  rellenarTipos();
   cargarContactosIndex().then(function(){ filtrar(); filtrarFirmados(); }).catch(function(){});
   _fetchActividadAll().then(function(acts){
     if(!acts)return;
@@ -2553,11 +2565,13 @@ async function abrirFicha(id){
   var _memberIds=await getGrupoMemberIds(c);
   var _esGrupo=_memberIds.length>1;
   var _inF='cliente_id=in.('+_memberIds.join(',')+')';
-  var [contactos,actividades,documentos]=await Promise.all([
+  var [contactos,actividades,documentos,estaciones]=await Promise.all([
     api('GET','/rest/v1/contactos?'+_inF+'&order=es_principal.desc',null,true).catch(function(){return[];}),
     api('GET','/rest/v1/actividad?'+_inF+'&order=fecha.desc&limit=50',null,true).catch(function(){return[];}),
-    api('GET','/rest/v1/documentos?'+_inF+'&order=created_at.desc',null,true).catch(function(){return[];})
+    api('GET','/rest/v1/documentos?'+_inF+'&order=created_at.desc',null,true).catch(function(){return[];}),
+    api('GET','/rest/v1/estaciones?'+_inF+'&order=provincia,municipio',null,true).catch(function(){return[];})
   ]);
+  estaciones=dedupeBy(estaciones||[],function(e){return e.ideess_miteco||e.id;});
   contactos=dedupeBy(contactos||[],keyContacto);
   actividades=dedupeBy(actividades||[],keyActividad);
   documentos=dedupeBy(documentos||[],keyDocumento);
@@ -2681,6 +2695,8 @@ async function abrirFicha(id){
       </div>
       <div id="tabla-reclamaciones-${c.id}"><p style="font-size:13px;color:var(--text3)">Cargando...</p></div>
     </div>`}`:''}
+
+    ${renderEstacionesFicha(estaciones)}
 
     <div class="ficha-section">
       <div class="ficha-section-title">
@@ -2815,6 +2831,23 @@ async function abrirFicha(id){
     </div>
   `;
   if(c.estado==='Firmado')setTimeout(function(){cargarFacturasAnyo(id);},200);
+}
+
+// Estaciones de servicio de la sociedad: bandera en enero de 2019 y actual (Cepsa = Moeve; Campsa/Petronor = Repsol)
+function renderEstacionesFicha(est){
+  if(!est||!est.length) return '';
+  var colC={'Misma bandera':'var(--green)','Distinta bandera':'var(--amber)'};
+  return '<div class="ficha-section"><div class="ficha-section-title">Estaciones de servicio ('+est.length+')</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="text-align:left;color:var(--text3)">'
+    +'<th style="padding:4px 6px">Estación</th><th style="padding:4px 6px">Bandera ene-2019</th><th style="padding:4px 6px">Bandera actual</th><th style="padding:4px 6px">Abierta</th></tr></thead><tbody>'
+    +est.map(function(e){
+      var lugar=[e.direccion,e.municipio,e.provincia?('('+e.provincia+')'):''].filter(Boolean).join(', ');
+      return '<tr style="border-top:1px solid var(--border)">'
+        +'<td style="padding:6px"><div style="font-weight:500">'+esc(e.rotulo||'—')+'</div><div style="color:var(--text3)">'+esc(lugar)+'</div></td>'
+        +'<td style="padding:6px">'+esc(e.bandera_2019||'—')+(e.cambio_bandera&&e.cambio_bandera!=='Sin información'?'<div style="font-size:11px;color:'+(colC[e.cambio_bandera]||'var(--text3)')+'">'+esc(e.cambio_bandera)+'</div>':'<div style="font-size:11px;color:var(--text3)">sin dato 2019</div>')+'</td>'
+        +'<td style="padding:6px">'+esc(e.bandera_actual||'—')+'</td>'
+        +'<td style="padding:6px">'+esc(e.abierta||'—')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
 }
 
 // Nombre de la empresa en la cabecera de la ficha + botón para renombrarla
@@ -4037,7 +4070,10 @@ function abrirModalEditar(){
   document.getElementById('ed-nombre-display').textContent=c.nombre;
   document.getElementById('ed-nombre').value=c.nombre||'';
   document.getElementById('ed-cif').value=c.cif||'';
-  document.getElementById('ed-tipo').value=c.tipo||'Wholesale';
+  rellenarTipos();
+  var _edT=document.getElementById('ed-tipo');
+  if(c.tipo&&!Array.prototype.some.call(_edT.options,function(o){return o.value===c.tipo;})) _edT.insertAdjacentHTML('beforeend','<option value="'+esc(c.tipo)+'">'+esc(c.tipo)+'</option>');
+  _edT.value=c.tipo||'Wholesale';
   document.getElementById('ed-responsable').value=c.responsable||'';
   document.getElementById('ed-grupo').value=c.grupo||'';
   document.getElementById('ed-canal').value=c.canal||'';
