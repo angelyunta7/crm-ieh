@@ -469,6 +469,10 @@ tbody td{padding:10px 14px;font-size:13px}
         <span>Sentencias</span>
         <span class="nav-badge" id="badge-sentencias" style="background:var(--blue);display:none">!</span>
       </button>
+      <button class="nav-item solo-interno" onclick="showView('eliminados',this)">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        <span>Eliminados</span>
+      </button>
       <button class="nav-item" onclick="showView('admin',this)" style="margin-top:auto;border-top:1px solid var(--border);padding-top:8px">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Admin</span>
@@ -1092,6 +1096,20 @@ tbody td{padding:10px 14px;font-size:13px}
       </div>
     </div>
 
+    <div id="view-eliminados" class="view">
+      <div class="topbar">
+        <span class="topbar-title">Clientes eliminados <span id="eliminados-n" style="color:var(--text3);font-weight:400"></span></span>
+        <div class="topbar-actions"><button class="btn btn-secondary btn-sm" onclick="cargarEliminados()">Actualizar</button></div>
+      </div>
+      <div class="content">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Clientes que alguien ha eliminado. No aparecen en el resto del CRM; solo los ven los usuarios sin restricciones. Se pueden restaurar o borrar del todo.</div>
+        <div class="table-card"><div style="overflow-x:auto">
+          <table class="tbl"><thead><tr><th>Cliente</th><th>CIF</th><th>Tipo · estado</th><th>Eliminado por</th><th>Fecha</th><th></th></tr></thead>
+          <tbody id="tbody-eliminados"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
     <div id="view-admin" class="view">
       <div class="topbar">
         <span class="topbar-title">Admin</span>
@@ -1167,7 +1185,7 @@ tbody td{padding:10px 14px;font-size:13px}
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm btn-secondary solo-interno" id="btn-editar-ficha" onclick="abrirModalEditar()">✎ Editar</button>
-        <button class="btn btn-sm solo-interno" style="background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2" onclick="eliminarCliente()">🗑 Eliminar</button>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2" onclick="eliminarCliente()">🗑 Eliminar</button>
         <button class="btn btn-sm btn-secondary" onclick="cerrarFicha()">✕</button>
       </div>
     </div>
@@ -1782,7 +1800,7 @@ async function _fetchClientesAll(){
   invalidateCache('/rest/v1/'+_tab);
   var todos=[],offset=0;
   while(true){
-    var page=await api('GET',`/rest/v1/${_tab}?select=*&order=${_ord}&limit=1000&offset=${offset}`,null,false);
+    var page=await api('GET',`/rest/v1/${_tab}?select=*${MODO_EXTERNO?'':'&eliminado_at=is.null'}&order=${_ord}&limit=1000&offset=${offset}`,null,false);
     if(!page||!page.length) break;
     todos=todos.concat(page);
     if(page.length<1000) break;
@@ -2091,6 +2109,7 @@ function showView(v,btn){
   if(v==='matriz'){ if(!Object.keys(_recPorCliente||{}).length) cargarReclamacionesFirmados().then(renderMatrizImportes); else renderMatrizImportes(); }
   if(v==='sentencias') cargarSentencias(false);
   if(v==='admin') renderUsuariosAdmin();
+  if(v==='eliminados') cargarEliminados();
   if(v==='clientes'){ _soloNoFirmados=false; _setClientesTitulo(false); filtrar(); }
 }
 
@@ -2290,7 +2309,7 @@ async function renderNovedades(){if(MODO_EXTERNO)return;
   try{
     var res=await Promise.all([
       api('GET','/rest/v1/actividad?select=cliente_id,fecha,notas,asunto,tipo,persona_rhj&order=fecha.desc&limit=20',null,true).catch(function(){return[];}),
-      api('GET','/rest/v1/clientes?select=id,nombre,created_at&order=created_at.desc&limit=20',null,true).catch(function(){return[];}),
+      api('GET','/rest/v1/clientes?select=id,nombre,created_at&eliminado_at=is.null&order=created_at.desc&limit=20',null,true).catch(function(){return[];}),
       api('GET','/rest/v1/contactos?select=cliente_id,nombre,created_at&order=created_at.desc&limit=20',null,true).catch(function(){return[];}),
       api('GET','/rest/v1/documentos?select=cliente_id,nombre,created_at&order=created_at.desc&limit=20',null,true).catch(function(){return[];})
     ]);
@@ -3460,13 +3479,55 @@ async function eliminarCliente(){
   if(!id)return;
   var c=clientes.find(function(x){return x.id===id;});
   if(!c)return;
-  if(!confirm('¿Eliminar a '+c.nombre+'? Esta acción no se puede deshacer.'))return;
+  if(!confirm('¿Eliminar a '+c.nombre+'?'+(MODO_EXTERNO?'':' Pasará a «Eliminados», desde donde se puede restaurar.')))return;
   try{
-    await api('DELETE','/rest/v1/clientes?id=eq.'+id);
+    // Borrado lógico: el cliente pasa a «Eliminados» (solo lo ven los usuarios no restringidos)
+    await api('POST','/rest/v1/rpc/eliminar_cliente',{p_id:id});
+    invalidateCache('/rest/v1/clientes');
     clientes=clientes.filter(function(x){return x.id!==id;});
     cerrarFicha();
     filtrar();filtrarAI();filtrarFirmados();renderDashboard();actualizarBadges();actualizarBadgesMobile();
     showToast('Cliente eliminado','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ── ELIMINADOS (solo usuarios no restringidos) ─────────────────
+var _eliminados=[];
+async function cargarEliminados(){
+  if(MODO_EXTERNO)return;
+  var tb=document.getElementById('tbody-eliminados'); if(!tb)return;
+  tb.innerHTML='<tr><td colspan="6" style="padding:20px;color:var(--text3)">Cargando…</td></tr>';
+  try{
+    _eliminados=await api('GET','/rest/v1/clientes?select=id,nombre,cif,tipo,estado,eliminado_at,eliminado_por&eliminado_at=not.is.null&order=eliminado_at.desc&limit=1000',null,false)||[];
+  }catch(e){ tb.innerHTML='<tr><td colspan="6" style="padding:20px;color:var(--red)">Error: '+esc(e.message)+'</td></tr>'; return; }
+  var n=document.getElementById('eliminados-n'); if(n) n.textContent=_eliminados.length?'('+_eliminados.length+')':'';
+  if(!_eliminados.length){ tb.innerHTML='<tr><td colspan="6" style="padding:20px;color:var(--text3)">No hay clientes eliminados.</td></tr>'; return; }
+  tb.innerHTML=_eliminados.map(function(c){
+    var f=c.eliminado_at?new Date(c.eliminado_at).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    return '<tr><td data-label="Cliente"><strong>'+esc(c.nombre)+'</strong></td>'
+      +'<td class="td-mono" data-label="CIF">'+esc(c.cif||'—')+'</td>'
+      +'<td data-label="Tipo / estado">'+esc(c.tipo||'—')+' · '+esc(c.estado||'—')+'</td>'
+      +'<td data-label="Eliminado por">'+esc(c.eliminado_por||'—')+'</td>'
+      +'<td data-label="Fecha">'+esc(f)+'</td>'
+      +'<td data-label="" style="white-space:nowrap"><button class="btn btn-sm btn-secondary" onclick="restaurarCliente(\''+c.id+'\')">↺ Restaurar</button> '
+      +'<button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2" onclick="borrarDefinitivo(\''+c.id+'\')">Borrar definitivamente</button></td></tr>';
+  }).join('');
+}
+async function restaurarCliente(id){
+  var c=_eliminados.find(function(x){return x.id===id;}); if(!c)return;
+  try{
+    await api('PATCH','/rest/v1/clientes?id=eq.'+id,{eliminado_at:null,eliminado_por:null});
+    showToast(c.nombre+' restaurado','success');
+    await cargarClientes(); cargarEliminados();
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+async function borrarDefinitivo(id){
+  var c=_eliminados.find(function(x){return x.id===id;}); if(!c)return;
+  if(!confirm('¿Borrar DEFINITIVAMENTE a '+c.nombre+'? Se borran también sus contactos, actividad, documentos y estaciones. No se puede deshacer.'))return;
+  try{
+    await api('DELETE','/rest/v1/clientes?id=eq.'+id);
+    showToast(c.nombre+' borrado definitivamente','success');
+    cargarEliminados();
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 
@@ -4667,7 +4728,7 @@ function adminCargarExcel(input){
 
       showToast('Excel leído. Consultando BD...','info');
 
-      var firmados=await api('GET','/rest/v1/clientes?select=id,nombre&estado=eq.Firmado&limit=200',null,false);
+      var firmados=await api('GET','/rest/v1/clientes?select=id,nombre&estado=eq.Firmado&eliminado_at=is.null&limit=200',null,false);
       var reclamExist=await api('GET','/rest/v1/reclamaciones?select=cliente_id,petrolera,anyo&limit=5000',null,false);
       var claveExist=new Set(reclamExist.map(function(r){return r.cliente_id+'|'+r.petrolera+'|'+r.anyo;}));
 
