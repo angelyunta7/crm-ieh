@@ -540,7 +540,7 @@ tbody td{padding:10px 14px;font-size:13px}
           <div class="table-header" style="flex-wrap:nowrap">
             <div class="search-box" style="max-width:240px">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="search-input" placeholder="Nombre, CIF, teléfono, email..." oninput="debounceFiltrar()">
+              <input type="text" id="search-input" placeholder="Nombre, CIF, teléfono, email, municipio, contacto..." title="Busca en nombre, CIF, grupo, CCAA, contactos (nombre, cargo, teléfonos, email, notas), estaciones (rótulo, dirección, municipio, provincia, CP) y actividad (teléfonos marcados y notas). Varias palabras = todas deben aparecer." oninput="debounceFiltrar()">
             </div>
             <select class="filter" id="f-orden" onchange="filtrar()">
               <option value="importe_desc">Mayor importe</option>
@@ -1290,7 +1290,7 @@ tbody td{padding:10px 14px;font-size:13px}
   <div class="global-search-box">
     <div class="global-search-input">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="gs-input" placeholder="Nombre, CIF, teléfono, email..." oninput="globalSearch(this.value)" autocomplete="off">
+      <input type="text" id="gs-input" placeholder="Nombre, CIF, teléfono, email, municipio, contacto, notas..." oninput="globalSearch(this.value)" autocomplete="off">
       <span class="kbd">Esc</span>
     </div>
     <div class="global-results" id="gs-results"><div style="padding:20px;text-align:center;font-size:13px;color:var(--text3)">Escribe para buscar...</div></div>
@@ -1833,8 +1833,10 @@ function rellenarTipos(){
 function _renderClientes(){
   rellenarTipos();
   cargarContactosIndex().then(function(){ filtrar(); filtrarFirmados(); }).catch(function(){});
+  cargarEstacionesIndex().then(function(){ filtrar(); filtrarFirmados(); }).catch(function(){});
   _fetchActividadAll().then(function(acts){
     if(!acts)return;
+    _indexarActividad(acts);
     // La "última actividad" del listado refleja la del GRUPO (como la ficha); si no hay grupo, la del propio cliente.
     var grupoDe={}; clientes.forEach(function(c){ grupoDe[c.id]=c.grupo||null; });
     var ultCli={}, ultGrp={};
@@ -1895,7 +1897,7 @@ function valPrioridad(c){
 async function _fetchActividadAll(){
   var todos=[],off=0;
   while(true){
-    var p=await api('GET','/rest/v1/actividad?select=id,cliente_id,fecha,notas,tipo,persona_rhj&order=fecha.desc,id.desc&limit=1000&offset='+off);
+    var p=await api('GET','/rest/v1/actividad?select=id,cliente_id,fecha,notas,tipo,persona_rhj,medio,contacto_cliente,asunto&order=fecha.desc,id.desc&limit=1000&offset='+off);
     if(!p||!p.length) break;
     todos=todos.concat(p);
     if(p.length<1000) break;
@@ -3240,34 +3242,30 @@ function globalSearch(q){
 }
 
 async function _doGlobalSearch(q){
-  var ql = q.toLowerCase().trim();
-  var qNum = _soloDigitos(q);
-  var resultados = {};
-
+  var P = _prepBusqueda(q.toLowerCase());
+  var res = [];
   clientes.forEach(function(c){
-    var via='';
-    if(c.nombre&&c.nombre.toLowerCase().includes(ql)) via='Nombre';
-    else if(c.cif&&c.cif.toLowerCase().includes(ql)) via='CIF';
-    else if(c.responsable&&c.responsable.toLowerCase().includes(ql)) via='Responsable';
-    if(via){ resultados[c.id]={cliente:c, match:via}; return; }
-
-    // Buscar en contactos (índice en memoria)
-    var cts=_contactosPorCliente[c.id]||[];
-    for(var i=0;i<cts.length;i++){
-      var ct=cts[i];
-      var tel=_soloDigitos(ct.telefono), mov=_soloDigitos(ct.movil);
-      var hit = (ct.email&&ct.email.toLowerCase().includes(ql))
-             || (ct.nombre&&ct.nombre.toLowerCase().includes(ql))
-             || (qNum.length>=3 && ((tel&&tel.indexOf(qNum)!==-1)||(mov&&mov.indexOf(qNum)!==-1)));
-      if(hit){
-        var detalle=[ct.telefono,ct.movil,ct.email].filter(Boolean).join(' · ');
-        resultados[c.id]={cliente:c, match:detalle, contacto:ct.nombre};
-        break;
+    var m=_motivoCoincidencia(c,P);
+    if(!m) return;
+    var item={cliente:c, match:m.via, contacto:null, orden:(m.via==='Nombre'?0:(m.via==='CIF'?1:2))};
+    if(/Contacto|Teléfono de contacto/.test(m.via)){   // enseñar qué contacto ha coincidido
+      var cts=_contactosPorCliente[c.id]||[];
+      for(var i=0;i<cts.length;i++){
+        var ct=cts[i];
+        var txt=_normTxt([ct.nombre,ct.cargo,ct.email,ct.telefono,ct.movil,ct.notas].filter(Boolean).join(' '));
+        var tels=[_soloDigitos(ct.telefono),_soloDigitos(ct.movil),_telsEnTexto(ct.notas)].join(' ');
+        if((P.esTel && tels.indexOf(P.digits)!==-1) || P.terms.some(function(t){return txt.indexOf(t)!==-1;})){
+          item.contacto=ct.nombre||'(sin nombre)';
+          item.match=[ct.cargo,ct.telefono,ct.movil,ct.email].filter(Boolean).join(' · ')||m.via;
+          break;
+        }
       }
     }
+    res.push(item);
   });
-
-  var lista = Object.values(resultados).slice(0,15);
+  res.sort(function(a,b){ return a.orden-b.orden || String(a.cliente.nombre||'').localeCompare(String(b.cliente.nombre||''),'es'); });
+  var total = res.length;
+  var lista = res.slice(0,20);
 
   if(!lista.length){
     document.getElementById('gs-results').innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--text3)">Sin resultados para "'+esc(q)+'"</div>';
@@ -3286,7 +3284,7 @@ async function _doGlobalSearch(q){
       +'</div>'
       +(MODO_EXTERNO?'<div>'+badgeNivel(c.nivel)+'</div>':'<div style="font-family:DM Mono,monospace;font-size:12px;color:var(--accent)">'+formatEur(impFull(c))+'</div>')
       +'</div>';
-  }).join('');
+  }).join('')+(total>lista.length?'<div style="padding:10px 16px;font-size:12px;color:var(--text3);text-align:center">y '+(total-lista.length)+' más · escribe algo más concreto</div>':'');
 }
 
 // UTILS
@@ -4016,48 +4014,110 @@ async function eliminarReclamacion(recId, clienteId){
 var _reclamacionesCache = [];
 var _recPorCliente = {};
 var _contactosPorCliente = {};   // {cliente_id: [{nombre,telefono,movil,email}]}
-var _buscableCliente = {};       // {cliente_id: "telefonos moviles emails nombrescontacto"} normalizado
+// Índices de búsqueda por cliente: texto en minúsculas y sin acentos + teléfonos solo-dígitos
+var _idxContactos = {}, _telsContactos = {};     // contactos: nombre, cargo, email, teléfonos, notas
+var _idxActividad = {}, _telsActividad = {};     // actividad: contacto, medio (nº marcado), asunto, notas
+var _idxEstaciones = {};                         // estaciones: rótulo, dirección, CP, municipio, provincia…
 
 // Normaliza un teléfono a solo dígitos para comparar "659 067 896" == "659067896"
 function _soloDigitos(s){ return (s||'').replace(/[^0-9]/g,''); }
+// Texto comparable: minúsculas y sin acentos ("Muñón" -> "munon")
+function _normTxt(s){ return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+// Teléfonos escritos en texto libre ("llamado al 965 11 20 00 / 600-56-57-55") -> grupos de dígitos unidos
+function _telsEnTexto(s){
+  if(!s) return '';
+  var m=String(s).replace(/(\d)[\s.\-\/]+(?=\d)/g,'$1').match(/\d{6,}/g);
+  return m?m.join(' '):'';
+}
 
-// Carga todos los contactos en memoria (una sola llamada) para búsqueda local instantánea
+// Carga todos los contactos en memoria (paginado) para búsqueda local instantánea
 async function cargarContactosIndex(){
   try{
     var data=[],offset=0;
     while(true){
-      var page=await api('GET','/rest/v1/contactos?select=cliente_id,nombre,telefono,movil,email&order=id&limit=1000&offset='+offset,null,false);
+      var page=await api('GET','/rest/v1/contactos?select=cliente_id,nombre,cargo,telefono,movil,email,notas&order=id&limit=1000&offset='+offset,null,false);
       if(!page||!page.length) break;
       data=data.concat(page);
       if(page.length<1000) break;
       offset+=1000;
     }
-    _contactosPorCliente={}; _buscableCliente={};
+    _contactosPorCliente={}; _idxContactos={}; _telsContactos={};
     data.forEach(function(ct){
-      if(!_contactosPorCliente[ct.cliente_id]) _contactosPorCliente[ct.cliente_id]=[];
-      _contactosPorCliente[ct.cliente_id].push(ct);
-      // String buscable: emails y nombres en minúscula + teléfonos solo-dígitos
-      var partes=[ct.nombre,ct.email,ct.telefono,ct.movil].filter(Boolean).join(' ').toLowerCase();
-      var nums=[_soloDigitos(ct.telefono),_soloDigitos(ct.movil)].filter(Boolean).join(' ');
-      _buscableCliente[ct.cliente_id]=((_buscableCliente[ct.cliente_id]||'')+' '+partes+' '+nums).trim();
+      var id=ct.cliente_id;
+      (_contactosPorCliente[id]=_contactosPorCliente[id]||[]).push(ct);
+      _idxContactos[id]=(_idxContactos[id]||'')+' '+_normTxt([ct.nombre,ct.cargo,ct.email,ct.telefono,ct.movil,ct.notas].filter(Boolean).join(' '));
+      _telsContactos[id]=(_telsContactos[id]||'')+' '+[_soloDigitos(ct.telefono),_soloDigitos(ct.movil),_telsEnTexto(ct.notas)].filter(Boolean).join(' ');
     });
   }catch(e){ console.log('Error contactos index:', e); }
 }
+// Actividad (ya descargada en _renderClientes): teléfonos marcados, persona contactada, asunto y notas
+function _indexarActividad(acts){
+  _idxActividad={}; _telsActividad={};
+  (acts||[]).forEach(function(a){
+    var id=a.cliente_id;
+    _idxActividad[id]=(_idxActividad[id]||'')+' '+_normTxt([a.contacto_cliente,a.medio,a.asunto,a.notas].filter(Boolean).join(' '));
+    var t=[_telsEnTexto(a.medio),_telsEnTexto(a.notas)].filter(Boolean).join(' ');
+    if(t) _telsActividad[id]=(_telsActividad[id]||'')+' '+t;
+  });
+}
+// Estaciones de servicio de cada cliente (paginado)
+async function cargarEstacionesIndex(){
+  try{
+    var data=[],off=0;
+    while(true){
+      var p=await api('GET','/rest/v1/estaciones?select=id,cliente_id,rotulo,direccion,cp,municipio,provincia,ideess_miteco,bandera_actual&order=id&limit=1000&offset='+off,null,false);
+      if(!p||!p.length) break;
+      data=data.concat(p);
+      if(p.length<1000) break;
+      off+=1000;
+    }
+    _idxEstaciones={};
+    data.forEach(function(e){
+      _idxEstaciones[e.cliente_id]=(_idxEstaciones[e.cliente_id]||'')+' '+_normTxt([e.rotulo,e.direccion,e.cp,e.municipio,e.provincia,e.ideess_miteco,e.bandera_actual].filter(Boolean).join(' '));
+    });
+  }catch(e){ console.log('Error estaciones index:', e); }
+}
 
-// ¿El cliente c coincide con la query q (busca nombre, CIF, responsable, y contactos: tel/movil/email/nombre)?
+// Prepara la búsqueda una sola vez por texto: palabras normalizadas y, si parece un teléfono, sus dígitos
+var _prepQ={q:null,p:null};
+function _prepBusqueda(q){
+  if(_prepQ.q===q) return _prepQ.p;
+  var raw=String(q||'').trim(), digits=_soloDigitos(raw);
+  if(digits.length>9 && /^(0034|34)/.test(digits)) digits=digits.replace(/^(0034|34)/,'');   // +34 / 0034
+  var norm=_normTxt(raw);
+  var p={raw:raw, norm:norm, terms:norm.split(/\s+/).filter(Boolean), digits:digits,
+         esTel:/^[+\d\s().\/-]+$/.test(raw) && digits.length>=3};
+  _prepQ={q:q,p:p};
+  return p;
+}
+// ¿Coincide el cliente? Devuelve dónde ({via}) o null. Cada palabra debe aparecer en algún campo:
+// nombre, CIF, grupo, responsable, CCAA, referido, nº pagador, contactos, estaciones y actividad.
+function _motivoCoincidencia(c,P){
+  if(!P||!P.raw) return {via:''};
+  if(P.esTel){
+    if((_telsContactos[c.id]||'').indexOf(P.digits)!==-1) return {via:'Teléfono de contacto'};
+    if((_telsActividad[c.id]||'').indexOf(P.digits)!==-1) return {via:'Teléfono en actividad'};
+  }
+  var terms=P.esTel?[P.digits]:P.terms;   // un número que no es teléfono: CP, CIF, código de estación…
+  if(!terms.length) return {via:''};
+  var campos=[
+    ['Nombre',_normTxt(c.nombre)],['CIF',_normTxt(c.cif)],['Grupo',_normTxt(c.grupo)],
+    ['Responsable',_normTxt(c.responsable)],['CCAA',_normTxt(c.ccaa)],['Referido por',_normTxt(c.referido_por)],
+    ['Nº pagador',_normTxt(c.pagador_id)],['Contacto',_idxContactos[c.id]||''],['Estación',_idxEstaciones[c.id]||'']
+  ];
+  if(P.norm.length>=3) campos.push(['Actividad',_idxActividad[c.id]||'']);   // notas: solo con 3+ letras (evita ruido)
+  var vias=[];
+  for(var i=0;i<terms.length;i++){
+    var hit=null;
+    for(var j=0;j<campos.length;j++){ if(campos[j][1] && campos[j][1].indexOf(terms[i])!==-1){ hit=campos[j][0]; break; } }
+    if(!hit) return null;
+    if(vias.indexOf(hit)===-1) vias.push(hit);
+  }
+  return {via:vias.join(' + ')};
+}
 function _clienteCoincide(c,q){
   if(!q) return true;
-  if(c.nombre&&c.nombre.toLowerCase().includes(q)) return true;
-  if(c.cif&&c.cif.toLowerCase().includes(q)) return true;
-  if(c.responsable&&c.responsable.toLowerCase().includes(q)) return true;
-  // Búsqueda en contactos (texto e índice de teléfonos)
-  var idx=_buscableCliente[c.id];
-  if(idx){
-    if(idx.includes(q)) return true;
-    var qNum=_soloDigitos(q);
-    if(qNum.length>=3 && idx.indexOf(qNum)!==-1) return true;
-  }
-  return false;
+  return !!_motivoCoincidencia(c,_prepBusqueda(q));
 }
 
 async function cargarReclamacionesFirmados(){if(MODO_EXTERNO)return;
