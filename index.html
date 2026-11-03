@@ -1555,6 +1555,19 @@ var MODO_EXTERNO=false;
 function tablaLecturaCliente(){return MODO_EXTERNO?'clientes_publico':'clientes';}
 function tablaEscrituraCliente(){return MODO_EXTERNO?'clientes_editable':'clientes';}
 function badgeNivel(n){n=Number(n)||0;var pc=n*10;return '<span class="nivel-badge" title="Prioridad '+n+' de 10" style="display:inline-block;min-width:40px;text-align:center;padding:2px 8px;border-radius:6px;font-weight:600;font-size:12px;background:linear-gradient(90deg,var(--accent2) '+pc+'%,var(--cream2) '+pc+'%);color:'+(n>=5?'#fff':'var(--text2)')+'">'+n+'/10</span>';}
+// Prioridad 0-10 a partir del importe total (misma escala que la vista clientes_publico de Supabase)
+function nivelDe(t){t=Number(t)||0;return t<=0?0:t<5000?1:t<15000?2:t<30000?3:t<50000?4:t<100000?5:t<250000?6:t<500000?7:t<1000000?8:t<3000000?9:10;}
+function nivelCliente(c){return MODO_EXTERNO?((c&&c.nivel)||0):nivelDe(impFull(c));}
+function formatEurMiles(v){try{return new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0,useGrouping:'always'}).format(v);}catch(e){return formatEur(v);}}
+// Importe que ve un usuario restringido (lo decide la vista, no este código): exacto si es firmado y ha
+// compartido litros; aproximado (~1k/5k/10k y decenas de miles) si no está firmado; nada en el resto.
+function importeExterno(c){ if(!c)return ''; if(c.importe_firmado!=null) return formatEurMiles(c.importe_firmado); if(c.importe_aprox) return '≈ '+formatEurMiles(c.importe_aprox); return ''; }
+// Celda de importe + prioridad (todos los usuarios ven la prioridad)
+function celdaImporte(c,imp){
+  var txt=MODO_EXTERNO?importeExterno(c):formatEur(imp!=null?imp:impFull(c));
+  return '<span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap">'+badgeNivel(nivelCliente(c))
+    +(txt&&txt!=='—'?'<span style="font-family:DM Mono,monospace;font-size:12px">'+txt+'</span>':'')+'</span>';
+}
 // Ficha del usuario (usuarios_rhj; la RLS solo deja leer la propia fila): modo externo,
 // persona RHJ (Ángel/Javier/Patricia) y rol. Así no hay emails de cuentas en este código público.
 var _personaUsuario='', _rolUsuario='';
@@ -1592,12 +1605,12 @@ function aplicarModoExterno(){
   if(fo){var op=fo.options; for(var i=0;i<op.length;i++){ if(op[i].value==='importe_desc')op[i].textContent='Mayor prioridad'; if(op[i].value==='importe_asc')op[i].textContent='Menor prioridad'; }}
   // Cabecera tabla clientes: "Importe total" -> "Prioridad"; quitar filtro por importe.
   var arr=document.querySelector('.sort-arrow[data-col="cli-importe_total"]');
-  if(arr&&arr.parentElement&&arr.parentElement.firstChild)arr.parentElement.firstChild.nodeValue='Prioridad';
+  if(arr&&arr.parentElement&&arr.parentElement.firstChild)arr.parentElement.firstChild.nodeValue='Prioridad · importe';
   var mn=document.getElementById('cf-imp-min');if(mn&&mn.closest('th'))mn.closest('th').innerHTML='';
   // Vista Firmados: ocultar KPIs de dinero y renombrar la columna de importe.
   ['fs-cartera','fs-beneficio'].forEach(function(id){var e=document.getElementById(id);if(e&&e.closest('.stat-card'))e.closest('.stat-card').style.display='none';});
   var fimp=document.querySelector('.sort-arrow[data-col="fir-importe"]');
-  if(fimp&&fimp.parentElement&&fimp.parentElement.firstChild)fimp.parentElement.firstChild.nodeValue='Prioridad';
+  if(fimp&&fimp.parentElement&&fimp.parentElement.firstChild)fimp.parentElement.firstChild.nodeValue='Prioridad · importe';
   if(clientesBtn)showView('clientes',clientesBtn);
 }
 // Resumen visual de documentación de la ficha: qué se ha recibido y qué falta (de un vistazo).
@@ -1619,9 +1632,13 @@ function resumenDocFicha(c){
 // Bloque de la ficha: importes (modo normal) o nivel de prioridad (modo externo).
 function bloqueImportesFicha(c){
   if(MODO_EXTERNO){
-    return '<div class="ficha-section"><div class="ficha-section-title">Nivel de prioridad</div>'
-      +'<div style="padding:6px 0">'+badgeNivel(c.nivel)
-      +' <span style="font-size:12px;color:var(--text3);margin-left:8px">prioridad del cliente (0 a 10)</span></div></div>';
+    var lin = c.importe_firmado!=null ? 'Importe reclamable: <strong>'+formatEurMiles(c.importe_firmado)+'</strong>'
+      : c.importe_aprox ? 'Importe aproximado: <strong>≈ '+formatEurMiles(c.importe_aprox)+'</strong>'
+      : c.estado==='Firmado' ? 'El importe aparecerá cuando comparta los litros' : '';
+    return '<div class="ficha-section"><div class="ficha-section-title">Prioridad e importe</div>'
+      +'<div style="padding:6px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+badgeNivel(c.nivel)
+      +' <span style="font-size:12px;color:var(--text3)">prioridad del cliente (0 a 10)</span>'
+      +(lin?'<span style="font-size:13px;color:var(--text2);margin-left:6px">'+lin+'</span>':'')+'</div></div>';
   }
   var pills=[2013,2014,2015,2016,2017,2018].map(function(y){
     var saras=parseFloat(c['importe_'+y]||0);
@@ -1630,7 +1647,7 @@ function bloqueImportesFicha(c){
     return tot>0?'<div class="importe-pill"><div class="anyo">'+y+'</div><div class="val">'+formatEurK(tot)+'</div></div>':'';
   }).join('');
   var total=(_recPorCliente[c.id]||[]).filter(function(r){return r.petrolera!=='SARAS';}).reduce(function(s,r){return s+parseFloat(r.importe||0);},0)+parseFloat(c.importe_total||0);
-  return '<div class="ficha-section"><div class="ficha-section-title">Importes IEH reclamables</div>'
+  return '<div class="ficha-section"><div class="ficha-section-title">Importes IEH reclamables <span style="margin-left:8px;vertical-align:middle">'+badgeNivel(nivelDe(total))+'</span></div>'
     +'<div class="importes-row">'+pills
     +'<div class="importe-pill total"><div class="anyo">TOTAL</div><div class="val">'+formatEur(total)+'</div></div></div></div>';
 }
@@ -2267,7 +2284,7 @@ function renderTabla(){
       <td data-label="Tipo"><span class="badge badge-${c.tipo==='Wholesale'?'w':'a'}">${esc(c.tipo)||'—'}</span></td>
       <td data-label="Estado">${badgeEstado(c.estado)}</td>
       <td data-label="Conocimiento">${badgeKnowledge(c.conocimiento_ieh)}</td>
-      <td class="td-mono" data-label="Importe">${MODO_EXTERNO?badgeNivel(c.nivel):formatEur(impFull(c))}</td>
+      <td class="td-mono" data-label="Importe">${celdaImporte(c)}</td>
       <td style="font-size:12px;color:var(--text3)" data-label="Último contacto">${c.updated_at?new Date(c.updated_at).toLocaleDateString('es-ES'):'—'}</td>
       <td style="font-size:12px;color:var(--text2);max-width:220px" data-label="Última actividad">${esc(c._ultima_act)||'—'}</td>
       <td data-label="Actividad por">${badgePersona(c)}</td>
@@ -2551,7 +2568,7 @@ function filtrarFirmados(){
       +'<td class="td-name">'+esc(c.nombre)+grupo_html+'</td>'
       +'<td data-label="Tipo"><span class="badge badge-'+(c.tipo==='Wholesale'?'w':'a')+'">'+(esc(c.tipo)||'—')+'</span></td>'
       +'<td class="td-mono" data-label="Fecha firma">'+fecha_html+'</td>'
-      +(MODO_EXTERNO?'<td data-label="Prioridad">'+badgeNivel(c.nivel)+'</td>':'<td class="td-mono" data-label="Importe">'+formatEur(imp)+'</td>')
+      +'<td class="td-mono" data-label="Importe">'+celdaImporte(c,imp)+'</td>'
       +'<td class="td-mono" data-label="% comisión">'+pct_html+'</td>'
       +'<td style="font-size:12px;color:var(--text2);max-width:220px" data-label="Última actividad">'+(esc(c._ultima_act)||'—')+'</td>'
       +'<td data-label="Actividad por">'+badgePersona(c)+'</td>'
@@ -3282,7 +3299,7 @@ async function _doGlobalSearch(q){
       +'<div class="gr-nombre">'+esc(c.nombre)+'</div>'
       +'<div class="gr-meta">'+matchLabel+' · '+badgeEstado(c.estado)+'</div>'
       +'</div>'
-      +(MODO_EXTERNO?'<div>'+badgeNivel(c.nivel)+'</div>':'<div style="font-family:DM Mono,monospace;font-size:12px;color:var(--accent)">'+formatEur(impFull(c))+'</div>')
+      +'<div>'+celdaImporte(c)+'</div>'
       +'</div>';
   }).join('')+(total>lista.length?'<div style="padding:10px 16px;font-size:12px;color:var(--text3);text-align:center">y '+(total-lista.length)+' más · escribe algo más concreto</div>':'');
 }
@@ -4280,7 +4297,7 @@ function renderGrupoSociedades(c){
       +'<span style="color:var(--blue)">🏢</span>'
       +'<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--blue)">'+esc(x.nombre)+'</div></div>'
       +badgeEstado(x.estado)
-      +(MODO_EXTERNO?badgeNivel(x.nivel):'<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--accent)">'+formatEur(impFull(x))+'</span>')
+      +celdaImporte(x)
       +'</div>';
   }).join('');
   // Aviso destacado al principio de la ficha: esta empresa pertenece a un grupo con varias sociedades.
