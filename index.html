@@ -1185,6 +1185,7 @@ tbody td{padding:10px 14px;font-size:13px}
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm btn-secondary solo-interno" id="btn-editar-ficha" onclick="abrirModalEditar()">✎ Editar</button>
+        <button class="btn btn-sm btn-secondary" title="Crear una copia de esta ficha (datos y contactos)" onclick="duplicarCliente()">⧉ Duplicar</button>
         <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2" onclick="eliminarCliente()">🗑 Eliminar</button>
         <button class="btn btn-sm btn-secondary" onclick="cerrarFicha()">✕</button>
       </div>
@@ -3501,6 +3502,27 @@ async function eliminarCliente(){
     cerrarFicha();
     filtrar();filtrarAI();filtrarFirmados();renderDashboard();actualizarBadges();actualizarBadgesMobile();
     showToast('Cliente eliminado','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// Duplicar ficha (todos los usuarios). Copia datos y contactos; no copia importes, reclamaciones,
+// estaciones, actividad ni documentos (lo decide la función duplicar_cliente de Supabase).
+async function duplicarCliente(){
+  var id=_clienteActivoId;
+  if(!id)return;
+  var c=clientes.find(function(x){return x.id===id;});
+  if(!c)return;
+  var nombre=prompt('Se creará una copia de la ficha con sus datos y contactos (sin importes, estaciones, actividad ni documentos).\n\nNombre de la copia:', c.nombre+' (copia)');
+  if(nombre===null)return;
+  nombre=nombre.trim();
+  if(!nombre){showToast('El nombre no puede quedar vacío','error');return;}
+  try{
+    var nuevoId=await api('POST','/rest/v1/rpc/duplicar_cliente',{p_id:id,p_nombre:nombre});
+    invalidateCache('/rest/v1/clientes');invalidateCache('/rest/v1/contactos');
+    cerrarFicha();
+    await cargarClientes();
+    showToast('Ficha duplicada','success');
+    if(nuevoId)abrirFicha(nuevoId);
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 
