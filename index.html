@@ -400,6 +400,46 @@ tbody td{padding:10px 14px;font-size:13px}
   .tbl tbody td .col-num-range{width:auto}
   .tbl .empty-state{padding:24px}
 }
+
+/* ===== Revisión móvil / iPhone (2026-11-05) ===== */
+.tel-link{color:var(--blue);text-decoration:none}
+@media(max-width:768px){
+  /* Pantalla de acceso: sin barra superior ni menú inferior */
+  body:not(.en-app) .mobile-nav, body:not(.en-app) .mobile-topbar{display:none!important}
+  /* Barras de herramientas: el buscador ocupa toda la fila y el resto baja debajo */
+  .table-header{flex-wrap:wrap!important;gap:8px!important}
+  .table-header .search-box{flex:1 1 100%!important;max-width:none!important;min-width:0!important}
+  .table-header #total-count{margin-left:auto}
+  /* Tarjetas de la lista más compactas: dos datos por fila, etiqueta encima */
+  .tbl tbody tr{display:grid!important;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:2px;padding:12px 14px!important}
+  .tbl tbody tr > td{display:block!important;text-align:left!important;padding:4px 0!important;min-width:0;overflow-wrap:anywhere}
+  .tbl tbody tr > td::before{display:block;font-size:10px!important;margin-bottom:1px}
+  .tbl tbody tr > td.td-name{grid-column:1/-1}
+  .tbl tbody tr > td.col-hide-mobile{display:block!important}
+  .tbl tbody tr > td[data-label="Última actividad"], .tbl tbody tr > td[data-label=""]{grid-column:1/-1}
+  .tbl tbody tr > td[data-label=""]{display:flex!important;justify-content:flex-end}
+  .tbl tbody tr > td.empty-state, .tbl tbody tr > td[colspan]{grid-column:1/-1;text-align:center!important}
+  /* Ficha: por encima del menú inferior, alto real de pantalla en iPhone y cabecera compacta */
+  .ficha-overlay{z-index:260}
+  .ficha-panel{height:92vh!important;height:92dvh!important;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .ficha-topbar{flex-wrap:wrap;padding:14px 14px 10px;gap:8px}
+  .ficha-topbar-info{flex:1 1 100%;min-width:0;padding-right:44px}
+  .ficha-nombre{font-size:17px;line-height:1.3}
+  .ficha-topbar > div:last-child{width:100%;justify-content:flex-start;flex-wrap:wrap}
+  .ficha-topbar > div:last-child .btn{min-height:36px;padding:6px 10px;font-size:13px}
+  .ficha-topbar > div:last-child .btn:last-child{position:absolute;top:10px;right:12px;width:40px;padding:0}
+  .grp-fila{flex-wrap:wrap}
+  .grp-fila > div{flex:1 1 70%!important;min-width:0}
+  /* Formularios: nada se sale de la ventana */
+  .modal [style*="display:grid"] > *{min-width:0}
+  .modal input,.modal select,.modal textarea{max-width:100%;box-sizing:border-box}
+  .modal [style*="repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+  .nc-contacto-row{grid-template-columns:1fr 1fr auto!important}
+  .nc-contacto-row input:first-child{grid-column:1/-1}
+  .nc-contacto-row input{min-width:0;width:100%;box-sizing:border-box}
+  /* Avisos por encima del menú inferior */
+  .toast{left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom,0px))!important;text-align:center}
+}
 </style>
 <style>.chip-filter{display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all .12s;white-space:nowrap}.chip-filter:hover{border-color:var(--accent)}.chip-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}</style><style>@media(max-width:1024px){#fs-chart-wrap{display:none}}</style><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -1722,6 +1762,7 @@ function iniciarApp(email){
   document.getElementById('user-avatar').textContent = name.slice(0,2).toUpperCase();
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  document.body.classList.add('en-app');
   var hb=document.getElementById('hamburger');if(hb)hb.style.display='';
   document.getElementById('last-update').textContent = 'Actualizado: '+new Date().toLocaleString('es-ES');
   
@@ -1803,6 +1844,7 @@ function doLogout(){
   session=null;clientes=[];
   try{localStorage.removeItem('rhj_session');}catch(e){}
   document.getElementById('app').style.display='none';
+  document.body.classList.remove('en-app');
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-pass').value='';
 }
@@ -2756,8 +2798,8 @@ async function abrirFicha(id){
             </div>
           </div>
           <div class="contacto-items" id="contacto-items-${ct.id}">
-            ${ct.telefono?`<div class="contacto-item"><span style="color:var(--text3)">Tel</span><a href="tel:${esc(fmtTel(ct.telefono))}" style="color:inherit;text-decoration:none">${esc(fmtTel(ct.telefono))}</a></div>`:''}
-            ${ct.movil?`<div class="contacto-item"><span style="color:var(--text3)">Móvil</span>${esc(fmtTel(ct.movil))}</div>`:''}
+            ${ct.telefono?`<div class="contacto-item"><span style="color:var(--text3)">Tel</span><a href="tel:${esc(_soloDigitos(ct.telefono))}" class="tel-link">${esc(fmtTel(ct.telefono))}</a></div>`:''}
+            ${ct.movil?`<div class="contacto-item"><span style="color:var(--text3)">Móvil</span><a href="tel:${esc(_soloDigitos(ct.movil))}" class="tel-link">${esc(fmtTel(ct.movil))}</a></div>`:''}
             ${ct.email?`<div class="contacto-item"><span style="color:var(--text3)">Email</span><a href="mailto:${esc(ct.email)}" style="color:var(--blue);text-decoration:none">${esc(ct.email)}</a></div>`:''}
             ${ct.linkedin?`<div class="contacto-item"><span style="color:var(--text3)">LinkedIn</span>${esc(ct.linkedin)}</div>`:''}
           </div>
@@ -4334,7 +4376,7 @@ function renderGrupoSociedades(c){
   var otros=clientes.filter(function(x){return x.grupo===c.grupo&&x.id!==c.id});
   var total=clientes.filter(function(x){return x.grupo===c.grupo}).length;
   var filas=otros.map(function(x){
-    return '<div onclick="cerrarFicha();var id=\''+x.id+'\';setTimeout(function(){abrirFicha(id)},150)" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(43,108,176,.18);cursor:pointer">'
+    return '<div class="grp-fila" onclick="cerrarFicha();var id=\''+x.id+'\';setTimeout(function(){abrirFicha(id)},150)" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(43,108,176,.18);cursor:pointer">'
       +'<span style="color:var(--blue)">🏢</span>'
       +'<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--blue)">'+esc(x.nombre)+'</div></div>'
       +badgeEstado(x.estado)
