@@ -529,7 +529,7 @@ tbody td{padding:10px 14px;font-size:13px}
       <div class="topbar">
         <span class="topbar-title" id="clientes-titulo">Todos los clientes</span>
         <div class="topbar-actions">
-          <button class="btn btn-accent solo-interno" onclick="openModalNuevo()">
+          <button class="btn btn-accent" onclick="openModalNuevo()">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Nuevo cliente
           </button>
@@ -1185,7 +1185,7 @@ tbody td{padding:10px 14px;font-size:13px}
       </div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm btn-secondary solo-interno" id="btn-editar-ficha" onclick="abrirModalEditar()">✎ Editar</button>
-        <button class="btn btn-sm btn-secondary" title="Crear una copia de esta ficha (datos y contactos)" onclick="duplicarCliente()">⧉ Duplicar</button>
+        <button class="btn btn-sm btn-secondary" title="Crear una copia de esta ficha (datos, contactos e historial)" onclick="duplicarCliente()">⧉ Duplicar</button>
         <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:1px solid #f5c6c2" onclick="eliminarCliente()">🗑 Eliminar</button>
         <button class="btn btn-sm btn-secondary" onclick="cerrarFicha()">✕</button>
       </div>
@@ -1196,7 +1196,7 @@ tbody td{padding:10px 14px;font-size:13px}
 
 <div class="modal-overlay" id="modal-nuevo">
   <div class="modal">
-    <div class="modal-title">Nuevo cliente</div>
+    <div class="modal-title" id="nc-titulo">Nuevo cliente</div>
     <div class="form-row">
       <div class="form-field"><label>Nombre empresa *</label><input type="text" id="nc-nombre" placeholder="Empresa S.L."></div>
       <div class="form-field"><label>CIF</label><input type="text" id="nc-cif" placeholder="A12345678"></div>
@@ -1208,6 +1208,9 @@ tbody td{padding:10px 14px;font-size:13px}
     <div class="form-row">
       <div class="form-field"><label>Responsable</label><input type="text" id="nc-responsable" placeholder="Ángel / Javier"></div>
       <div class="form-field"><label>Referido por</label><input type="text" id="nc-referido" placeholder="—"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label>Grupo empresarial</label><input type="text" id="nc-grupo" list="nc-grupos-dl" placeholder="Sin grupo (o elige / escribe uno)"><datalist id="nc-grupos-dl"></datalist></div>
     </div>
     <div style="margin-bottom:12px">
       <div style="font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">Contactos</div>
@@ -1224,7 +1227,7 @@ tbody td{padding:10px 14px;font-size:13px}
     <div class="form-field"><label>Notas iniciales</label><textarea id="nc-notas" placeholder="Observaciones sobre el cliente..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modal-nuevo')">Cancelar</button>
-      <button class="btn btn-accent" onclick="crearCliente()">Crear cliente</button>
+      <button class="btn btn-accent" id="nc-crear" onclick="crearCliente()">Crear cliente</button>
     </div>
   </div>
 </div>
@@ -3211,35 +3214,53 @@ async function guardarContactoNuevo(clienteId){
   }
 }
 
-function openModalNuevo(){var r=document.getElementById('nc-responsable');if(r&&!r.value)r.value=nombreUsuario();document.getElementById('modal-nuevo').classList.add('open')}
+// Nueva sociedad (todos los usuarios). grupo = opcional, para crearla ya dentro de un grupo.
+function openModalNuevo(grupo){
+  ['nc-nombre','nc-cif','nc-referido','nc-notas','nc-grupo'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var est=document.getElementById('nc-estado'); if(est) est.value='Sin contactar';
+  var lista=document.getElementById('nc-contactos-list');
+  if(lista){ var filas=lista.querySelectorAll('.nc-contacto-row'); for(var i=1;i<filas.length;i++) filas[i].remove();
+             if(filas[0]) filas[0].querySelectorAll('input').forEach(function(x){x.value='';}); }
+  var grupos=[]; clientes.forEach(function(c){ if(c.grupo&&grupos.indexOf(c.grupo)===-1) grupos.push(c.grupo); }); grupos.sort();
+  var dl=document.getElementById('nc-grupos-dl'); if(dl) dl.innerHTML=grupos.map(function(g){return '<option value="'+esc(g)+'">';}).join('');
+  var g=(typeof grupo==='string')?grupo:'';
+  document.getElementById('nc-grupo').value=g;
+  document.getElementById('nc-titulo').textContent=g?('Nueva sociedad · '+(/^grupo\b/i.test(g)?g:'Grupo '+g)):'Nuevo cliente';
+  var r=document.getElementById('nc-responsable'); if(r) r.value=nombreUsuario()||'';
+  document.getElementById('modal-nuevo').classList.add('open');
+  setTimeout(function(){var n=document.getElementById('nc-nombre'); if(n) n.focus();},50);
+}
 
 async function crearCliente(){
   var nombre=document.getElementById('nc-nombre').value.trim();
   if(!nombre){showToast('El nombre es obligatorio','error');return}
+  var contactos=[];
+  document.querySelectorAll('.nc-contacto-row').forEach(function(row){
+    var ins=row.querySelectorAll('input');
+    var n=ins[0].value.trim(),tel=ins[1].value.trim(),email=ins[2].value.trim();
+    if(n||tel||email) contactos.push({nombre:n,telefono:tel,email:email});
+  });
+  var btn=document.getElementById('nc-crear'); if(btn){btn.disabled=true;btn.textContent='Creando...';}
   try{
-    var nuevo=await api('POST','/rest/v1/clientes',{
-      nombre,cif:document.getElementById('nc-cif').value.trim()||null,
-      tipo:document.getElementById('nc-tipo').value,
-      estado:document.getElementById('nc-estado').value,
-      responsable:document.getElementById('nc-responsable').value.trim()||null,
-      referido_por:document.getElementById('nc-referido').value.trim()||null,
-      situacion_previa:document.getElementById('nc-notas').value.trim()||null
+    var nuevoId=await api('POST','/rest/v1/rpc/crear_cliente',{
+      p_nombre:nombre,
+      p_cif:document.getElementById('nc-cif').value.trim()||null,
+      p_tipo:document.getElementById('nc-tipo').value||null,
+      p_estado:document.getElementById('nc-estado').value,
+      p_responsable:document.getElementById('nc-responsable').value.trim()||null,
+      p_referido:document.getElementById('nc-referido').value.trim()||null,
+      p_notas:document.getElementById('nc-notas').value.trim()||null,
+      p_grupo:document.getElementById('nc-grupo').value.trim()||null,
+      p_contactos:contactos
     });
-    var clienteId=nuevo&&nuevo[0]&&nuevo[0].id;
-    if(clienteId){
-      var rows=document.querySelectorAll('.nc-contacto-row');
-      for(var row of rows){
-        var ins=row.querySelectorAll('input');
-        var nombre=ins[0].value.trim(),tel=ins[1].value.trim(),email=ins[2].value.trim();
-        if(nombre||tel||email){
-          await api('POST','/rest/v1/contactos',{cliente_id:clienteId,nombre:nombre||null,telefono:tel||null,email:email||null,es_principal:true});
-        }
-      }
-    }
+    invalidateCache('/rest/v1/clientes');invalidateCache('/rest/v1/contactos');
     closeModal('modal-nuevo');
-    showToast('Cliente creado','success');
+    if(_clienteActivoId) cerrarFicha();
     await cargarClientes();
+    showToast('Cliente creado','success');
+    if(nuevoId) abrirFicha(nuevoId);
   }catch(e){showToast('Error: '+e.message,'error')}
+  finally{ if(btn){btn.disabled=false;btn.textContent='Crear cliente';} }
 }
 
 // BÚSQUEDA GLOBAL
@@ -3505,20 +3526,20 @@ async function eliminarCliente(){
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 
-// Duplicar ficha (todos los usuarios). Copia datos y contactos; no copia importes, reclamaciones,
-// estaciones, actividad ni documentos (lo decide la función duplicar_cliente de Supabase).
+// Duplicar ficha (todos los usuarios). Copia datos, contactos e historial de actividad (notas, llamadas);
+// no copia importes, reclamaciones, estaciones ni documentos (lo decide la función duplicar_cliente de Supabase).
 async function duplicarCliente(){
   var id=_clienteActivoId;
   if(!id)return;
   var c=clientes.find(function(x){return x.id===id;});
   if(!c)return;
-  var nombre=prompt('Se creará una copia de la ficha con sus datos y contactos (sin importes, estaciones, actividad ni documentos).\n\nNombre de la copia:', c.nombre+' (copia)');
+  var nombre=prompt('Se creará una copia de la ficha con sus datos, contactos e historial de actividad (notas y llamadas). No se copian importes, estaciones ni documentos.\n\nNombre de la copia:', c.nombre+' (copia)');
   if(nombre===null)return;
   nombre=nombre.trim();
   if(!nombre){showToast('El nombre no puede quedar vacío','error');return;}
   try{
     var nuevoId=await api('POST','/rest/v1/rpc/duplicar_cliente',{p_id:id,p_nombre:nombre});
-    invalidateCache('/rest/v1/clientes');invalidateCache('/rest/v1/contactos');
+    invalidateCache('/rest/v1/clientes');invalidateCache('/rest/v1/contactos');invalidateCache('/rest/v1/actividad');
     cerrarFicha();
     await cargarClientes();
     showToast('Ficha duplicada','success');
@@ -4326,6 +4347,7 @@ function renderGrupoSociedades(c){
     +'<span style="font-size:16px">🏢</span>'
     +'<span style="font-size:13px;font-weight:600;color:var(--blue)">Pertenece al Grupo '+esc(c.grupo)+'</span>'
     +'<span style="font-size:11px;color:var(--blue);background:rgba(43,108,176,.12);padding:2px 8px;border-radius:10px">'+total+' sociedades en total</span>'
+    +'<button class="btn btn-xs btn-secondary" style="margin-left:auto" data-grp="'+esc(c.grupo)+'" onclick="openModalNuevo(this.dataset.grp)" title="Crear una sociedad nueva ya dentro de este grupo">+ Nueva sociedad en el grupo</button>'
     +'</div>'
     +(otros.length
        ? '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">Otras sociedades del grupo (los contactos, la actividad y los documentos son compartidos):</div>'+filas
