@@ -354,7 +354,7 @@ tbody td{padding:10px 14px;font-size:13px}
   .modal{width:96vw!important;max-width:96vw!important;padding:18px 14px;max-height:88vh;overflow-y:auto}.form-row{grid-template-columns:1fr!important}
   input,select,textarea{font-size:16px!important}.btn,.btn-sm{min-height:40px}
 }
-@media(max-width:400px){.stats-grid{grid-template-columns:1fr!important}.mobile-nav-btn{font-size:8px}}
+@media(max-width:400px){.stats-grid{grid-template-columns:repeat(2,1fr)!important}.stat-card{padding:12px!important;min-width:0}.stat-value{font-size:22px!important}.stat-sub{font-size:11px!important;overflow-wrap:anywhere}.mobile-nav-btn{font-size:8px}}
 
 .mobile-nav{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;justify-content:flex-start;scrollbar-width:none}
 .mobile-nav::-webkit-scrollbar{display:none}
@@ -403,6 +403,8 @@ tbody td{padding:10px 14px;font-size:13px}
 
 /* ===== Revisión móvil / iPhone (2026-11-05) ===== */
 .tel-link{color:var(--blue);text-decoration:none}
+.gs-cerrar{cursor:pointer}.gs-cerrar .gs-x{display:none}
+.ct-call{display:none}   /* botón de llamar: solo en el móvil */
 @media(max-width:768px){
   /* Pantalla de acceso: sin barra superior ni menú inferior */
   body:not(.en-app) .mobile-nav, body:not(.en-app) .mobile-topbar{display:none!important}
@@ -417,8 +419,38 @@ tbody td{padding:10px 14px;font-size:13px}
   .tbl tbody tr > td.td-name{grid-column:1/-1}
   .tbl tbody tr > td.col-hide-mobile{display:block!important}
   .tbl tbody tr > td[data-label="Última actividad"], .tbl tbody tr > td[data-label=""]{grid-column:1/-1}
+  .tbl tbody tr > td[data-label="Email"]{grid-column:1/-1}
+  .ct-cel{max-width:none;white-space:normal;word-break:break-all}
   .tbl tbody tr > td[data-label=""]{display:flex!important;justify-content:flex-end}
   .tbl tbody tr > td.empty-state, .tbl tbody tr > td[colspan]{grid-column:1/-1;text-align:center!important}
+  /* --- Revisión 2 (2026-11-07) --- */
+  /* Tarjetas más cortas: fuera los datos poco útiles en el móvil y los email/teléfono vacíos */
+  #view-clientes .tbl tbody tr > td[data-label="CIF"],
+  #view-clientes .tbl tbody tr > td[data-label="Conocimiento"],
+  #view-clientes .tbl tbody tr > td[data-label="Último contacto"],
+  #view-clientes .tbl tbody tr > td[data-label="Responsable"],
+  .tbl tbody tr > td:has(> .ct-vacio){display:none!important}
+  .gs-cerrar .gs-esc{display:none} .gs-cerrar .gs-x{display:inline!important}
+  .tbl tbody tr{grid-auto-flow:row dense}   /* rellena huecos que dejan los datos a todo el ancho */
+  .ct-call{display:inline-block;margin-left:8px;text-decoration:none;font-size:13px;line-height:1}
+  /* Firmados: los 6 estados de documentación en 3 columnas */
+  #view-firmados .tbl tbody tr{grid-template-columns:repeat(6,1fr)!important}
+  #view-firmados .tbl tbody tr > td{grid-column:span 3}
+  #view-firmados .tbl tbody tr > td.td-name, #view-firmados .tbl tbody tr > td[data-label="Email"],
+  #view-firmados .tbl tbody tr > td[data-label="Última actividad"], #view-firmados .tbl tbody tr > td[colspan]{grid-column:1/-1}
+  #view-firmados .tbl tbody tr > td[data-label="Litros"], #view-firmados .tbl tbody tr > td[data-label="Facturas"],
+  #view-firmados .tbl tbody tr > td[data-label="Tarifarios"], #view-firmados .tbl tbody tr > td[data-label="Cuentas anuales"],
+  #view-firmados .tbl tbody tr > td[data-label="F. completas"], #view-firmados .tbl tbody tr > td[data-label="PN"]{grid-column:span 2;text-align:left!important}
+  /* Filtros por columna dentro del panel «Filtros» (antes no había forma de usarlos en el móvil) */
+  .view.filtros-abiertos .tbl thead{display:block}
+  .view.filtros-abiertos .tbl thead tr:not(.filter-row){display:none}
+  .view.filtros-abiertos .tbl thead tr.filter-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+  .view.filtros-abiertos .tbl tr.filter-row th{display:block;padding:0!important;border:none!important;background:none!important;position:static!important;text-align:left;min-width:0;white-space:normal}
+  .view.filtros-abiertos .tbl tr.filter-row th::before{content:attr(data-label);display:block;font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:400;text-transform:none;letter-spacing:0}
+  .view.filtros-abiertos .tbl tr.filter-row th.dup-movil, .view.filtros-abiertos .tbl tr.filter-row th.fc-vacio{display:none!important}
+  .view.filtros-abiertos .tbl tr.filter-row input:not([type=checkbox]), .view.filtros-abiertos .tbl tr.filter-row select{width:100%!important;padding:7px 8px!important;border-radius:7px}
+  .view.filtros-abiertos .tbl tr.filter-row .col-num-range input{width:50%!important}
+  .view.filtros-abiertos .filtros-panel{margin-bottom:10px}
   /* Ficha: por encima del menú inferior, alto real de pantalla en iPhone y cabecera compacta */
   .ficha-overlay{z-index:260}
   .ficha-panel{height:92vh!important;height:92dvh!important;padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -594,6 +626,7 @@ tbody td{padding:10px 14px;font-size:13px}
             </button>
             <button class="btn-filtros" id="btn-cal-llamadas" title="Calendario de próximas llamadas" onclick="abrirCalLlamadas(this)">📅 Llamadas</button>
             <span id="chip-llamada" class="chip-filtro" style="display:none;margin-left:auto"></span>
+            <span id="chip-ct-cli" class="chip-filtro" style="display:none"></span>
             <span id="total-count" style="font-size:12px;color:var(--text3);white-space:nowrap;margin-left:auto"></span>
           </div>
           <div class="filtros-panel" id="filtros-main">
@@ -661,6 +694,8 @@ tbody td{padding:10px 14px;font-size:13px}
               <tr>
                 <th onclick="ordenarCol('cli','nombre')">Empresa<span class="sort-arrow" data-col="cli-nombre"></span></th>
                 <th onclick="ordenarCol('cli','cif')">CIF<span class="sort-arrow" data-col="cli-cif"></span></th>
+                <th onclick="ordenarCol('cli','email')">Email<span class="sort-arrow" data-col="cli-email"></span></th>
+                <th onclick="ordenarCol('cli','telefono')">Teléfono<span class="sort-arrow" data-col="cli-telefono"></span></th>
                 <th onclick="ordenarCol('cli','tipo')">Tipo<span class="sort-arrow" data-col="cli-tipo"></span></th>
                 <th onclick="ordenarCol('cli','estado')">Estado<span class="sort-arrow" data-col="cli-estado"></span></th>
                 <th onclick="ordenarCol('cli','conocimiento_ieh')">Conocimiento IEH<span class="sort-arrow" data-col="cli-conocimiento_ieh"></span></th>
@@ -675,6 +710,8 @@ tbody td{padding:10px 14px;font-size:13px}
               <tr class="filter-row">
                 <th><input type="text" id="cf-nombre" placeholder="Filtrar..." oninput="filtrar()"></th>
                 <th><input type="text" id="cf-cif" placeholder="Filtrar..." oninput="filtrar()"></th>
+                <th><input type="text" id="cf-email" placeholder="Filtrar..." oninput="filtrar()"><label class="ct-rep-lbl"><input type="checkbox" id="cf-email-rep" onchange="filtrar()"> solo repetidos</label></th>
+                <th><input type="text" id="cf-tel" placeholder="Filtrar..." inputmode="tel" oninput="filtrar()"><label class="ct-rep-lbl"><input type="checkbox" id="cf-tel-rep" onchange="filtrar()"> solo repetidos</label></th>
                 <th><select id="cf-tipo" onchange="filtrar()"><option value="">Todos</option></select></th>
                 <th><select id="cf-estado" onchange="filtrar()"><option value="">Todos</option><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option><option value="Firmado">Firmado</option><option value="OUT. Sin interés">OUT</option><option value="Extinguida">Extinguida</option></select></th>
                 <th><select id="cf-conocimiento" onchange="filtrar()"><option value="">Todos</option><option>Nulo</option><option>Medio</option><option>Alto</option></select></th>
@@ -810,6 +847,7 @@ tbody td{padding:10px 14px;font-size:13px}
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
               Filtros
             </button>
+            <span id="chip-ct-fir" class="chip-filtro" style="display:none"></span>
           </div>
           <div class="filtros-panel" id="filtros-fs" style="margin-bottom:14px">
             <div class="filtros-grid">
@@ -854,6 +892,8 @@ tbody td{padding:10px 14px;font-size:13px}
               <thead>
               <tr>
                 <th onclick="ordenarCol('fir','nombre')">Empresa<span class="sort-arrow" data-col="fir-nombre"></span></th>
+                <th onclick="ordenarCol('fir','email')">Email<span class="sort-arrow" data-col="fir-email"></span></th>
+                <th onclick="ordenarCol('fir','telefono')">Teléfono<span class="sort-arrow" data-col="fir-telefono"></span></th>
                 <th onclick="ordenarCol('fir','tipo')">Tipo<span class="sort-arrow" data-col="fir-tipo"></span></th>
                 <th onclick="ordenarCol('fir','fecha_firma')">Fecha firma<span class="sort-arrow" data-col="fir-fecha_firma"></span></th>
                 <th onclick="ordenarCol('fir','importe')">Importe total<span class="sort-arrow" data-col="fir-importe"></span></th>
@@ -869,6 +909,8 @@ tbody td{padding:10px 14px;font-size:13px}
               </tr>
               <tr class="filter-row">
                 <th><input type="text" id="ff-nombre" placeholder="Filtrar..." oninput="filtrarFirmados()"></th>
+                <th><input type="text" id="ff-email" placeholder="Filtrar..." oninput="filtrarFirmados()"><label class="ct-rep-lbl"><input type="checkbox" id="ff-email-rep" onchange="filtrarFirmados()"> solo repetidos</label></th>
+                <th><input type="text" id="ff-tel" placeholder="Filtrar..." inputmode="tel" oninput="filtrarFirmados()"><label class="ct-rep-lbl"><input type="checkbox" id="ff-tel-rep" onchange="filtrarFirmados()"> solo repetidos</label></th>
                 <th><select id="ff-tipo" onchange="filtrarFirmados()"><option value="">Todos</option></select></th>
                 <th></th>
                 <th><div class="col-num-range"><input type="number" id="ff-imp-min" placeholder="mín" oninput="filtrarFirmados()"><input type="number" id="ff-imp-max" placeholder="máx" oninput="filtrarFirmados()"></div></th>
@@ -1335,7 +1377,7 @@ tbody td{padding:10px 14px;font-size:13px}
     <div class="global-search-input">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="gs-input" placeholder="Nombre, CIF, teléfono, email, municipio, contacto, notas..." oninput="globalSearch(this.value)" autocomplete="off">
-      <span class="kbd">Esc</span>
+      <span class="kbd gs-cerrar" role="button" title="Cerrar" onclick="closeGlobalSearch()"><span class="gs-esc">Esc</span><span class="gs-x">Cerrar</span></span>
     </div>
     <div class="global-results" id="gs-results"><div style="padding:20px;text-align:center;font-size:13px;color:var(--text3)">Escribe para buscar...</div></div>
   </div>
@@ -1528,7 +1570,7 @@ tbody td{padding:10px 14px;font-size:13px}
 <div class="toast" id="toast"></div>
 <style>
 /* Modo externo: ocultar la columna "% comisión" (5ª) de Firmados y el filtro por importe */
-body.modo-externo #view-firmados table tr > *:nth-child(5){display:none;}
+body.modo-externo #view-firmados table tr > *:nth-child(7){display:none!important;}  /* % comisión: oculto a restringidos (también en móvil) */
 /* Usuario limitado: 'Días sin contacto' se sustituye por 'Próxima llamada' */
 body.modo-externo .col-dias{display:none;}
 body.modo-externo #ff-imp-min, body.modo-externo #ff-imp-max{display:none;}
@@ -1559,6 +1601,13 @@ body.modo-externo #view-firmados .tbl{min-width:1150px}
 .chip-filtro{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;border-radius:20px;background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:500;white-space:nowrap}
 .chip-filtro button{background:none;border:none;cursor:pointer;color:inherit;font-size:13px;line-height:1;padding:0 3px;border-radius:50%}
 .chip-filtro button:hover{background:rgba(0,0,0,.08)}
+.ct-cel{font-size:11.5px;line-height:1.5;white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.ct-link{color:var(--text2);text-decoration:none}
+.ct-link:hover{color:var(--blue);text-decoration:underline}
+.ct-rep{display:inline-block;background:var(--amber-bg);color:var(--amber);font-size:10px;font-weight:600;padding:0 5px;border-radius:8px;margin-left:3px;cursor:help}
+.ct-mas{font-size:10px;color:var(--text3)}
+.ct-rep-lbl{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:400;color:var(--text3);margin-top:3px;white-space:nowrap;text-transform:none;letter-spacing:0}
+.ct-rep-lbl input{width:auto!important;margin:0}
 .cal-pop{position:fixed;z-index:350;display:none;width:304px;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-md);padding:12px;font-size:12px;color:var(--text)}
 .cal-pop.open{display:block}
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -2161,8 +2210,12 @@ function showView(v,btn){
   document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
   document.querySelectorAll('.nav-item').forEach(function(el){el.classList.remove('active');});
   document.getElementById('view-'+v).classList.add('active');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   closeSidebar();
+  _alEntrarVista(v);
+}
+// Carga lo que necesita cada vista al entrar. La usan el menú lateral (showView) y el menú inferior del móvil (mobileNav).
+function _alEntrarVista(v){
   if(v==='analisis'){showViewAnalisis();}
   if(v==='firmados'){
     cargarReclamacionesFirmados();
@@ -2211,6 +2264,8 @@ function filtrar(){
   // Filtro por última actividad: rango de fechas (desde / hasta) y persona que la hizo
   var cfActDesde=_tsDia(getVal('cf-act-desde'),false), cfActHasta=_tsDia(getVal('cf-act-hasta'),true);
   var cfActPor=getVal('cf-act-por');
+  var cfCt=_leerFiltroContacto('cf');
+  _pintarChipContacto('cli',cfCt);
 
   clientesFiltrados=clientes.filter(function(c){
     if(q&&!_clienteCoincide(c,q))return false;
@@ -2226,6 +2281,7 @@ function filtrar(){
     // --- columna ---
     if(cfNombre&&!((c.nombre||'').toLowerCase().includes(cfNombre)))return false;
     if(cfCif&&!((c.cif||'').toLowerCase().includes(cfCif)))return false;
+    if(!_pasaFiltroContacto(c,cfCt))return false;
     if(cfTipo&&c.tipo!==cfTipo)return false;
     if(cfEstado&&c.estado!==cfEstado)return false;
     if(cfConoc&&c.conocimiento_ieh!==cfConoc)return false;
@@ -2254,9 +2310,14 @@ function filtrar(){
       else if(oc.col==='fecha_llamar'){ var fa=a.fecha_llamar||'', fb=b.fecha_llamar||''; if(!fa||!fb) return (fa?-1:0)+(fb?1:0); va=fa; vb=fb; }
       else if(oc.col==='importe_total'){va=valPrioridad(a);vb=valPrioridad(b);}
       else if(oc.col==='updated_at'){va=new Date(a.updated_at||0).getTime();vb=new Date(b.updated_at||0).getTime();}
+      else if(oc.col==='email'||oc.col==='telefono'){ return _cmpContacto(a,b,oc.col,oc.dir); }
       else {va=a[oc.col];vb=b[oc.col];}
       return _cmp(va,vb,oc.dir);
     });
+  } else if(cfCt.emailRep||cfCt.telRep){
+    // "Solo repetidos": agrupar las sociedades que comparten email / teléfono
+    var _colRep=cfCt.emailRep?'email':'telefono';
+    clientesFiltrados.sort(function(a,b){ return _cmpContacto(a,b,_colRep,1); });
   } else {
     sortArray(clientesFiltrados,orden);
   }
@@ -2274,7 +2335,7 @@ var _ordenCol = { cli:{col:null,dir:1}, fir:{col:null,dir:1} };
 function ordenarCol(tabla, col){
   var st = _ordenCol[tabla];
   if(st.col===col){ st.dir = -st.dir; }   // mismo: invertir
-  else { st.col = col; st.dir = (col==='fecha_llamar') ? 1 : -1; }      // nuevo: descendente; la próxima llamada, de la más cercana a la más lejana
+  else { st.col = col; st.dir = (col==='fecha_llamar'||col==='email'||col==='telefono') ? 1 : -1; }      // nuevo: descendente; la próxima llamada, de la más cercana a la más lejana
   _pintarFlechas(tabla);
   if(tabla==='cli') filtrar();
   else filtrarFirmados();
@@ -2318,13 +2379,15 @@ function renderTabla(){
   var inicio=(paginaActual-1)*_tp;
   var pagina=clientesFiltrados.slice(inicio,inicio+_tp);
   var tbody=document.getElementById('tabla-body');
-  if(!pagina.length){tbody.innerHTML='<tr><td colspan="12"><div class="empty-state"><p>Sin resultados</p></div></td></tr>';renderPag();return}
+  if(!pagina.length){tbody.innerHTML='<tr><td colspan="14"><div class="empty-state"><p>Sin resultados</p></div></td></tr>';renderPag();return}
   tbody.innerHTML=pagina.map(function(c){
     var dias=diasSinContacto(c);
     var diasBadge=dias===null?'<span style="color:var(--text3);font-size:12px">—</span>':`<span class="dias-badge ${dias<7?'dias-ok':dias<21?'dias-warn':'dias-alert'}">${dias}d</span>`;
     return`<tr onclick="abrirFicha('${c.id}')">
       <td class="td-name">${esc(c.nombre)}${c.grupo?'<div style="margin-top:3px"><span style="font-size:10px;color:var(--blue);background:var(--blue-bg);padding:1px 7px;border-radius:8px;white-space:nowrap">🏢 '+esc(c.grupo)+'</span></div>':''}</td>
       <td class="td-mono" data-label="CIF">${esc(c.cif)||'—'}</td>
+      <td data-label="Email">${_celdaContacto(c,'email','cli')}</td>
+      <td data-label="Teléfono">${_celdaContacto(c,'tel','cli')}</td>
       <td data-label="Tipo"><span class="badge badge-${c.tipo==='Wholesale'?'w':'a'}">${esc(c.tipo)||'—'}</span></td>
       <td data-label="Estado">${badgeEstado(c.estado)}</td>
       <td data-label="Conocimiento">${badgeKnowledge(c.conocimiento_ieh)}</td>
@@ -2542,6 +2605,8 @@ function filtrarFirmados(){
   var ffPn=getVal('ff-pn');
   var ffImpMin=parseFloat(getVal('ff-imp-min'))||0;
   var ffImpMax=parseFloat(getVal('ff-imp-max'))||Infinity;
+  var ffCt=_leerFiltroContacto('ff');
+  _pintarChipContacto('fir',ffCt);
 
   var lista=clientes.filter(function(c){
     if(c.estado!=='Firmado')return false;
@@ -2553,6 +2618,7 @@ function filtrarFirmados(){
     if(responsable&&c.responsable!==responsable)return false;
     // --- columna ---
     if(ffNombre&&!((c.nombre||'').toLowerCase().includes(ffNombre)))return false;
+    if(!_pasaFiltroContacto(c,ffCt))return false;
     if(ffTipo&&c.tipo!==ffTipo)return false;
     if(ffActividad&&!((c._ultima_act||'').toLowerCase().includes(ffActividad)))return false;
     if(!_pasaFiltroActividad(c,ffActDesde,ffActHasta,ffActPor)) return false;
@@ -2578,10 +2644,12 @@ function filtrarFirmados(){
       else if(oc.col==='act_por'){va=a._ultima_act_por||'';vb=b._ultima_act_por||'';}
       else if(oc.col==='pn_sol'){va=a.poder_notarial_solicitado||'';vb=b.poder_notarial_solicitado||'';}
       else if(oc.col==='pn_comp'){va=a.poder_notarial_compartido||'';vb=b.poder_notarial_compartido||'';}
+      else if(oc.col==='email'||oc.col==='telefono'){ return _cmpContacto(a,b,oc.col,oc.dir); }
       else {va=a[oc.col];vb=b[oc.col];}
       return _cmp(va,vb,oc.dir);
     });
   }
+  else if(ffCt.emailRep||ffCt.telRep){ var _colRepF=ffCt.emailRep?'email':'telefono'; lista.sort(function(a,b){ return _cmpContacto(a,b,_colRepF,1); }); }
   else if(orden==='importe_desc') lista.sort(function(a,b){return getImp(b)-getImp(a);});
   else if(orden==='importe_asc') lista.sort(function(a,b){return getImp(a)-getImp(b);});
   else sortArray(lista, orden);
@@ -2610,6 +2678,8 @@ function filtrarFirmados(){
     var pct_html=pct?(pct*100).toFixed(0)+'%':'—';
     return '<tr data-cid="'+c.id+'" onclick="abrirFicha(this.dataset.cid)" style="cursor:pointer">'
       +'<td class="td-name">'+esc(c.nombre)+grupo_html+'</td>'
+      +'<td data-label="Email">'+_celdaContacto(c,'email','fir')+'</td>'
+      +'<td data-label="Teléfono">'+_celdaContacto(c,'tel','fir')+'</td>'
       +'<td data-label="Tipo"><span class="badge badge-'+(c.tipo==='Wholesale'?'w':'a')+'">'+(esc(c.tipo)||'—')+'</span></td>'
       +'<td class="td-mono" data-label="Fecha firma">'+fecha_html+'</td>'
       +'<td class="td-mono" data-label="Importe">'+celdaImporte(c,imp)+'</td>'
@@ -2623,7 +2693,7 @@ function filtrarFirmados(){
       +'<td style="text-align:center" data-label="F. completas">'+badgeSiNo(c.facturas_completas)+'</td>'
       +'<td style="text-align:center" data-label="PN">'+badgeDocs(c.poder_notarial)+'</td>'
       +'</tr>';
-  }).join('')||'<tr><td colspan="13"><div class="empty-state"><p>Ningún cliente firmado aún</p></div></td></tr>';
+  }).join('')||'<tr><td colspan="15"><div class="empty-state"><p>Ningún cliente firmado aún</p></div></td></tr>';
 
   if(typeof renderGraficoFirmados==='function') renderGraficoFirmados();
 }
@@ -3538,9 +3608,8 @@ function mobileNav(view,btn){
   if(btn)btn.classList.add('active');
   document.querySelectorAll('.view').forEach(function(el){el.classList.remove('active');});
   var v=document.getElementById('view-'+view);if(v)v.classList.add('active');
-  if(view==='firmados'&&typeof cargarReclamacionesFirmados==='function'){cargarReclamacionesFirmados();if(typeof actualizarSelectorPetroleras==='function')actualizarSelectorPetroleras();if(MODO_EXTERNO)filtrarFirmados();}
-  if(view==='sentencias'&&typeof cargarSentencias==='function')cargarSentencias(false);
-  if(view==='clientes'){ _soloNoFirmados=false; _setClientesTitulo(false); filtrar(); }
+  window.scrollTo(0,0);
+  _alEntrarVista(view);   // antes el móvil no cargaba Análisis (se quedaba en «—»)
 }
 
 function actualizarBadgesMobile(){
@@ -3949,7 +4018,26 @@ function toggleFiltros(panelId, btnId){
   if(!panel)return;
   var isOpen=panel.classList.toggle('open');
   if(btn) btn.classList.toggle('activo',isOpen);
-  if(isOpen) panel.querySelector('input,select')&&panel.querySelector('input,select').focus();
+  var vista=panel.closest('.view'); if(vista) vista.classList.toggle('filtros-abiertos',isOpen);
+  _etiquetarFiltrosColumna();
+  if(isOpen && window.innerWidth>768) panel.querySelector('input,select')&&panel.querySelector('input,select').focus();
+}
+// Móvil: la fila de filtros por columna se muestra dentro del panel «Filtros» como rejilla con etiquetas.
+// Se ocultan los que ya están en el panel (Estado, Tipo, Importe…) para no duplicarlos.
+var _FILTROS_DUP_MOVIL=['cf-tipo','cf-estado','cf-conocimiento','cf-imp-min','cf-llamar-btn','cf-dias-min','cf-responsable','ff-tipo','ff-litros','ff-facturas'];
+function _etiquetarFiltrosColumna(){
+  document.querySelectorAll('.tbl tr.filter-row').forEach(function(fr){
+    if(fr.dataset.etiquetado) return;
+    var cab=fr.parentElement.querySelector('tr:not(.filter-row)'); if(!cab) return;
+    var ths=cab.children;
+    [].forEach.call(fr.children,function(th,i){
+      var h=ths[i]; if(!h) return;
+      th.setAttribute('data-label',(h.childNodes[0]&&h.childNodes[0].textContent||h.textContent).trim());
+      if(!th.querySelector('input,select,button')) th.classList.add('fc-vacio');
+      _FILTROS_DUP_MOVIL.forEach(function(id){ if(th.querySelector('#'+id)) th.classList.add('dup-movil'); });
+    });
+    fr.dataset.etiquetado='1';
+  });
 }
 
 function getVal(id){var el=document.getElementById(id);return el?el.value:'';}
@@ -3960,12 +4048,13 @@ function contarFiltrosActivos(ids){
 }
 
 function resetFiltros(){
-  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por'].forEach(function(id){
+  ['f-estado','f-tipo','f-conocimiento','f-responsable','f-canal','f-grupo','cf-nombre','cf-cif','cf-email','cf-tel','cf-tipo','cf-estado','cf-conocimiento','cf-responsable','cf-act-desde','cf-act-hasta','cf-act-por'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   ['f-importe-min','f-importe-max','f-dias-min','cf-imp-min','cf-imp-max','cf-dias-min','cf-dias-max'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
+  ['cf-email-rep','cf-tel-rep'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   _ordenCol.cli={col:null,dir:1}; _pintarFlechas('cli');
   fijarFiltroLlamada(null,true);
   filtrar();
@@ -3982,9 +4071,10 @@ function resetFiltrosAI(){
 }
 
 function resetFiltrosFs(){
-  ['fs-grupo','fs-tipo','fs-litros','fs-facturas','fs-responsable','ff-nombre','ff-tipo','ff-actividad','ff-act-desde','ff-act-hasta','ff-act-por','ff-litros','ff-facturas','ff-tarifarios','ff-cuentas','ff-fcomp','ff-pn','ff-imp-min','ff-imp-max'].forEach(function(id){
+  ['fs-grupo','fs-tipo','fs-litros','fs-facturas','fs-responsable','ff-nombre','ff-email','ff-tel','ff-tipo','ff-actividad','ff-act-desde','ff-act-hasta','ff-act-por','ff-litros','ff-facturas','ff-tarifarios','ff-cuentas','ff-fcomp','ff-pn','ff-imp-min','ff-imp-max'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
+  ['ff-email-rep','ff-tel-rep'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   filtrarFirmados();
 }
 
@@ -4148,7 +4238,116 @@ async function cargarContactosIndex(){
       _idxContactos[id]=(_idxContactos[id]||'')+' '+_normTxt([ct.nombre,ct.cargo,ct.email,ct.telefono,ct.movil,ct.notas].filter(Boolean).join(' '));
       _telsContactos[id]=(_telsContactos[id]||'')+' '+[_soloDigitos(ct.telefono),_soloDigitos(ct.movil),_telsEnTexto(ct.notas)].filter(Boolean).join(' ');
     });
+    _indexarEmailsTels();
   }catch(e){ console.log('Error contactos index:', e); }
+}
+
+// ===== COLUMNAS EMAIL / TELÉFONO (potenciales y firmados) =====
+// Sirven para detectar sociedades del mismo grupo: comparten email o teléfono de contacto.
+var _emailsCli = {}, _telsCli = {};      // id cliente -> [{k: clave normalizada, v: texto a mostrar}]
+var _cuentaEmail = {}, _cuentaTel = {};  // clave -> nº de sociedades (vivas) que la usan
+function _claveTel(t){
+  var d=_soloDigitos(t);
+  if(d.indexOf('0034')===0&&d.length>11) d=d.slice(4);
+  else if(d.indexOf('34')===0&&d.length===11) d=d.slice(2);
+  return d.length>=6?d:'';
+}
+function _indexarEmailsTels(){
+  _emailsCli={}; _telsCli={}; _cuentaEmail={}; _cuentaTel={};
+  var vivos={}; (clientes||[]).forEach(function(c){ vivos[c.id]=1; });
+  Object.keys(_contactosPorCliente).forEach(function(id){
+    var em=[], te=[], vistoE={}, vistoT={};
+    _contactosPorCliente[id].forEach(function(ct){
+      String(ct.email||'').split(/[\s,;]+/).forEach(function(e){
+        e=e.trim().replace(/^mailto:/i,''); var k=e.toLowerCase();
+        if(k.indexOf('@')<1||vistoE[k]) return;
+        vistoE[k]=1; em.push({k:k,v:k});
+      });
+      [ct.telefono,ct.movil].forEach(function(t){
+        String(t||'').split(/[\/,;]|\s{2,}/).forEach(function(p){
+          var k=_claveTel(p); if(!k||vistoT[k]) return;
+          vistoT[k]=1; te.push({k:k,v:p.trim()});
+        });
+      });
+    });
+    if(em.length) _emailsCli[id]=em;
+    if(te.length) _telsCli[id]=te;
+    if(vivos[id]){
+      em.forEach(function(x){ _cuentaEmail[x.k]=(_cuentaEmail[x.k]||0)+1; });
+      te.forEach(function(x){ _cuentaTel[x.k]=(_cuentaTel[x.k]||0)+1; });
+    }
+  });
+}
+function _celdaContacto(c,tipo,tabla){
+  var lista=(tipo==='email'?_emailsCli:_telsCli)[c.id]||[];
+  if(!lista.length) return '<span class="ct-vacio" style="color:var(--text3);font-size:12px">—</span>';
+  var cuenta=tipo==='email'?_cuentaEmail:_cuentaTel, MAX=3;
+  var html=lista.slice(0,MAX).map(function(x){
+    var n=cuenta[x.k]||0;
+    return '<div class="ct-cel"><a href="#" class="ct-link" data-t="'+tabla+'" data-tipo="'+tipo+'" data-v="'+esc(x.k)+'" onclick="return filtrarPorContacto(event,this)" title="Ver las sociedades con este '+(tipo==='email'?'email':'teléfono')+'">'+esc(x.v)+'</a>'
+      +(n>1?'<span class="ct-rep" title="Lo comparten '+n+' sociedades">×'+n+'</span>':'')
+      +(tipo==='tel'?'<a class="ct-call" href="tel:'+esc(x.k)+'" onclick="event.stopPropagation()" title="Llamar">📞</a>':'')+'</div>';
+  }).join('');
+  if(lista.length>MAX) html+='<div class="ct-mas">+'+(lista.length-MAX)+' más</div>';
+  return html;
+}
+// Clic en un email/teléfono de la tabla: filtrar por él (sin abrir la ficha)
+function filtrarPorContacto(ev,el){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  var pre=el.dataset.t==='cli'?'cf':'ff', tipo=el.dataset.tipo;
+  var inp=document.getElementById(pre+'-'+(tipo==='email'?'email':'tel'));
+  var otro=document.getElementById(pre+'-'+(tipo==='email'?'tel':'email'));
+  if(inp) inp.value=el.dataset.v;
+  if(otro) otro.value='';
+  if(el.dataset.t==='cli') filtrar(); else filtrarFirmados();
+  return false;
+}
+function _leerFiltroContacto(pre){
+  var chk=function(id){ var e=document.getElementById(id); return !!(e&&e.checked); };
+  return { email:_normTxt((getVal(pre+'-email')||'').trim()), tel:_digitosFiltroTel(getVal(pre+'-tel')),
+           emailRep:chk(pre+'-email-rep'), telRep:chk(pre+'-tel-rep') };
+}
+// Lo tecleado en el filtro de teléfono: solo dígitos y sin prefijo +34 / 0034 (admite números parciales)
+function _digitosFiltroTel(t){
+  t=String(t||''); var d=_soloDigitos(t);
+  if(/^\s*(\+|00)\s*34/.test(t)) d=d.replace(/^(00)?34/,'');
+  else if(d.length>9&&d.indexOf('34')===0) d=d.slice(2);
+  return d;
+}
+function _pasaFiltroContacto(c,F){
+  if(F.email){ var em=_emailsCli[c.id]||[]; if(!em.some(function(x){ return _normTxt(x.k).indexOf(F.email)!==-1; })) return false; }
+  if(F.tel){ var te=_telsCli[c.id]||[]; if(!te.some(function(x){ return x.k.indexOf(F.tel)!==-1; })) return false; }
+  if(F.emailRep&&!(_emailsCli[c.id]||[]).some(function(x){ return _cuentaEmail[x.k]>1; })) return false;
+  if(F.telRep&&!(_telsCli[c.id]||[]).some(function(x){ return _cuentaTel[x.k]>1; })) return false;
+  return true;
+}
+// Orden por email/teléfono: los que no tienen van al final
+function _cmpContacto(a,b,col,dir){
+  var m=col==='email'?_emailsCli:_telsCli;
+  var pick=function(c){ var l=m[c.id]||[]; if(!l.length) return '';
+    var cu=col==='email'?_cuentaEmail:_cuentaTel, rep=l.filter(function(x){ return cu[x.k]>1; });
+    return (rep[0]||l[0]).k; };   // si alguno está repetido, ordenar por ese (así quedan juntas)
+  var fa=pick(a), fb=pick(b);
+  if(!fa||!fb) return (fa?-1:0)+(fb?1:0);
+  return fa.localeCompare(fb,'es',{numeric:true})*dir || String(a.nombre||'').localeCompare(String(b.nombre||''),'es');
+}
+// Chip visible (también en móvil, donde la fila de filtros está oculta)
+function _pintarChipContacto(tabla,F){
+  var chip=document.getElementById('chip-ct-'+tabla); if(!chip) return;
+  var pre=tabla==='cli'?'cf':'ff', partes=[];
+  if(F.email) partes.push('✉ '+esc(getVal(pre+'-email').trim()));
+  if(F.tel) partes.push('📞 '+esc(getVal(pre+'-tel').trim()));
+  if(F.emailRep) partes.push('Emails repetidos');
+  if(F.telRep) partes.push('Teléfonos repetidos');
+  if(!partes.length){ chip.innerHTML=''; chip.style.display='none'; return; }
+  chip.innerHTML=partes.join(' · ')+'<button type="button" title="Quitar este filtro" onclick="quitarFiltroContacto(\''+tabla+'\')">✕</button>';
+  chip.style.display='inline-flex';
+}
+function quitarFiltroContacto(tabla){
+  var pre=tabla==='cli'?'cf':'ff';
+  ['-email','-tel'].forEach(function(s){ var e=document.getElementById(pre+s); if(e) e.value=''; });
+  ['-email-rep','-tel-rep'].forEach(function(s){ var e=document.getElementById(pre+s); if(e) e.checked=false; });
+  if(tabla==='cli') filtrar(); else filtrarFirmados();
 }
 // Actividad (ya descargada en _renderClientes): teléfonos marcados, persona contactada, asunto y notas
 function _indexarActividad(acts){
@@ -4604,6 +4803,7 @@ function renderGraficoFirmados(){if(MODO_EXTERNO)return;
     if(!found)tip.style.display='none';
   };
   canvas.onmouseleave=function(){tip.style.display='none';};
+  canvas.onclick=function(e){canvas.onmousemove(e);};   // en el móvil no hay «pasar el ratón»: tocar la barra muestra el detalle
   var leg=document.getElementById('fs-chart-legend');
   if(leg){leg.innerHTML=top5.map(function(p){var i=pets.indexOf(p);var col=i>=0?pal[i%pal.length]:'#999';return'<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:'+col+';flex-shrink:0"></span>'+p+'</span>';}).join('');}
 }
@@ -4758,11 +4958,14 @@ function renderGraficoAnalisis(){
   });
   var totAnyo=anyosMostrar.map(function(anyo,ai){return datasets.reduce(function(s,ds){return s+(ds.data[ai]||0);},0);});
   var maxVal=Math.max.apply(null,totAnyo.concat([1]));
-  var W=(canvas.offsetWidth||canvas.parentElement.offsetWidth||320)-20;
+  var W=canvas.offsetWidth||((canvas.parentElement.offsetWidth||340)-40);
   if(W<50)W=300;
   var H=320;
-  canvas.width=W;canvas.height=H;
+  // Nítido en pantallas retina (iPhone): lienzo a la densidad real del dispositivo
+  var dpr=Math.min(window.devicePixelRatio||1,3);
+  canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
   var ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,W,H);
   var padL=58,padR=10,padT=10,padB=32;
   var cW=W-padL-padR,cH=H-padT-padB,n=anyosMostrar.length;
@@ -4803,6 +5006,7 @@ function renderGraficoAnalisis(){
     if(!found)tip.style.display='none';
   };
   canvas.onmouseleave=function(){tip.style.display='none';};
+  canvas.onclick=function(e){canvas.onmousemove(e);};   // en el móvil no hay «pasar el ratón»: tocar la barra muestra el detalle
   var leg=document.getElementById('an-chart-legend');
   if(leg){leg.innerHTML=top5.map(function(p){var i=pets.indexOf(p);var col=i>=0?pal[i%pal.length]:'#999';return'<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:'+col+';flex-shrink:0"></span>'+p+'</span>';}).join('');}
 }
