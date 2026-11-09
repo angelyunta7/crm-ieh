@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Autorizar acceso · CRM RHJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Página de autorización OAuth del CRM: aquí un conector externo (p. ej. Claude) pide
+   acceso de SOLO LECTURA al CRM con la cuenta del usuario. */
+:root{--navy:#0f1f35;--accent:#e8714a;--cream:#f5f3ee;--text:#0f1f35;--text2:#4a5568;--text3:#8a97a8;--border:#ddd9d0;--green:#2d7d5a;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fdecea;--white:#fff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--navy);font-family:'DM Sans',system-ui,sans-serif;color:var(--text);display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.card{background:var(--white);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.25);width:100%;max-width:440px;padding:28px 26px}
+.logo{font-weight:700;font-size:18px;letter-spacing:-.3px;margin-bottom:2px}.logo span{color:var(--accent)}
+.sub{font-size:12px;color:var(--text3);margin-bottom:22px}
+h1{font-size:19px;margin:0 0 10px;letter-spacing:-.2px}
+p{font-size:14px;line-height:1.55;color:var(--text2);margin:0 0 12px}
+.cliente{font-weight:600;color:var(--text)}
+.caja{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--text2)}
+.caja ul{margin:6px 0 0;padding-left:18px}.caja li{margin:2px 0}
+.ok{color:var(--green);font-weight:600}.no{color:var(--red);font-weight:600}
+label{display:block;font-size:12px;color:var(--text3);margin:10px 0 4px}
+input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;font-size:16px;font-family:inherit}
+input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.botones{display:flex;gap:10px;margin-top:18px}
+button{flex:1;padding:12px 14px;border-radius:10px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid transparent}
+.primario{background:var(--accent);color:#fff}.primario:hover{filter:brightness(.95)}
+.secundario{background:var(--white);color:var(--text2);border-color:var(--border)}
+button:disabled{opacity:.6;cursor:default}
+.error{background:var(--red-bg);color:var(--red);border-radius:9px;padding:10px 12px;font-size:13px;margin-top:12px;display:none}
+.enlace{background:none;border:none;color:var(--text3);font-size:12px;text-decoration:underline;padding:0;margin-top:14px;flex:none;cursor:pointer}
+.oculto{display:none}
+.cargando{font-size:14px;color:var(--text3)}
+</style>
+</head>
+<body>
+<main class="card" id="card">
+  <div class="logo">RHJ <span>CRM</span></div>
+  <div class="sub">Autorizar acceso de un conector externo</div>
+
+  <div id="v-cargando" class="cargando">Cargando…</div>
+
+  <!-- Inicio de sesión (si no hay sesión del CRM en este navegador) -->
+  <form id="v-login" class="oculto" autocomplete="on">
+    <h1>Inicia sesión en el CRM</h1>
+    <p>Para autorizar el conector, entra con tu cuenta del CRM de RHJ.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="pass">Contraseña</label>
+    <input id="pass" type="password" autocomplete="current-password" required>
+    <div class="botones"><button type="submit" class="primario" id="btn-login">Entrar</button></div>
+    <div class="error" id="err-login"></div>
+  </form>
+
+  <!-- Consentimiento -->
+  <section id="v-consent" class="oculto">
+    <h1><span class="cliente" id="c-nombre">La aplicación</span> quiere acceder a tu CRM</h1>
+    <p>Con tu cuenta <b id="c-email"></b>.</p>
+    <div class="caja">
+      <div class="ok">✓ Podrá consultar (solo lectura)</div>
+      <ul><li>Sociedades y su fase</li><li>Actividad comercial y llamadas programadas</li><li>Operativa de firmados (documentación)</li><li id="c-importes">Importes, igual que los ves tú en el CRM</li></ul>
+      <div class="no" style="margin-top:10px">✕ No podrá modificar, crear ni borrar nada</div>
+    </div>
+    <p style="font-size:12px;color:var(--text3)">Podrás retirar el acceso cuando quieras quitando el conector o pidiéndolo al administrador.</p>
+    <div class="botones">
+      <button class="secundario" id="btn-deny">Rechazar</button>
+      <button class="primario" id="btn-approve">Autorizar</button>
+    </div>
+    <button class="enlace" id="btn-otra">No soy yo · entrar con otra cuenta</button>
+    <div class="error" id="err-consent"></div>
+  </section>
+
+  <!-- Mensajes finales / errores -->
+  <section id="v-msg" class="oculto"><h1 id="m-titulo"></h1><p id="m-texto"></p></section>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  // No permitir que la página se cargue dentro de otra (evita que engañen para pulsar «Autorizar»)
+  if (window.top !== window.self) { document.body.innerHTML = ''; return; }
+
+  var SUPABASE_URL = 'https://wiebmtzvbsfoihkhykvw.supabase.co';
+  var KEY = 'sb_publishable_-JMIOFdAJIsBd5eUdxs5hg_PVuSM2yH';   // clave publicable (pública por diseño)
+  var authId = new URLSearchParams(location.search).get('authorization_id');
+  var $ = function(id){ return document.getElementById(id); };
+
+  function ver(id){ ['v-cargando','v-login','v-consent','v-msg'].forEach(function(v){ $(v).classList.toggle('oculto', v !== id); }); }
+  function mensaje(t, x){ $('m-titulo').textContent = t; $('m-texto').textContent = x; ver('v-msg'); }
+  function error(el, t){ $(el).textContent = t; $(el).style.display = 'block'; }
+
+  // Sesión compartida con el CRM (misma web): misma clave de almacenamiento
+  function leerSesion(){ try { return JSON.parse(localStorage.getItem('rhj_session') || 'null'); } catch(e){ return null; } }
+  function guardarSesion(d, email){
+    var s = { access_token: d.access_token, refresh_token: d.refresh_token, email: email, expires_at: Date.now() + (d.expires_in || 3600) * 1000 };
+    try { localStorage.setItem('rhj_session', JSON.stringify(s)); } catch(e){}
+    return s;
+  }
+  async function auth(method, path, body, token){
+    var h = { apikey: KEY, 'Content-Type': 'application/json' };
+    if (token) h.Authorization = 'Bearer ' + token;
+    var r = await fetch(SUPABASE_URL + '/auth/v1' + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined });
+    var d = null; try { d = await r.json(); } catch(e){}
+    if (!r.ok) { var m = (d && (d.error_description || d.msg || d.message || d.error)) || ('Error ' + r.status); var e = new Error(m); e.status = r.status; throw e; }
+    return d;
+  }
+  async function sesionValida(){
+    var s = leerSesion();
+    if (!s || !s.access_token) return null;
+    if (s.expires_at && s.expires_at - Date.now() < 60000) {
+      if (!s.refresh_token) return null;
+      try { var d = await auth('POST', '/token?grant_type=refresh_token', { refresh_token: s.refresh_token }); s = guardarSesion(d, s.email); }
+      catch(e){ return null; }
+    }
+    return s;
+  }
+
+  async function mostrarConsentimiento(s){
+    ver('v-cargando');
+    var det;
+    try { det = await auth('GET', '/oauth/authorizations/' + encodeURIComponent(authId), null, s.access_token); }
+    catch(e){
+      if (e.status === 401 || e.status === 403) { try { localStorage.removeItem('rhj_session'); } catch(_){} ver('v-login'); return; }
+      mensaje('No se puede continuar', 'La solicitud de acceso no es válida o ha caducado. Vuelve a conectar desde la aplicación. (' + e.message + ')');
+      return;
+    }
+    // Ya autorizado antes: volver directamente a la aplicación
+    if (det && det.redirect_url && !det.authorization_id) { location.replace(det.redirect_url); return; }
+
+    var email = (det.user && det.user.email) || s.email || '';
+    $('c-nombre').textContent = (det.client && det.client.name) || 'Una aplicación';
+    $('c-email').textContent = email;
+
+    // Solo cuentas con ficha en el CRM (usuarios_rhj)
+    var fila = null;
+    try {
+      var r = await fetch(SUPABASE_URL + '/rest/v1/usuarios_rhj?select=ve_importes,activo&email=eq.' + encodeURIComponent(email.toLowerCase()), { headers: { apikey: KEY, Authorization: 'Bearer ' + s.access_token } });
+      if (r.ok) fila = (await r.json())[0] || null;
+    } catch(e){}
+    if (!fila || fila.activo === false) {
+      $('btn-approve').disabled = true;
+      error('err-consent', 'Esta cuenta no tiene acceso al CRM de RHJ, así que no se puede autorizar. Entra con otra cuenta o pulsa «Rechazar».');
+    }
+    $('c-importes').textContent = (fila && fila.ve_importes === false) ? 'Prioridad 0-10 en lugar de importes (como en tu CRM)' : 'Importes, igual que los ves tú en el CRM';
+    ver('v-consent');
+
+    async function decidir(accion){
+      $('btn-approve').disabled = $('btn-deny').disabled = true;
+      try {
+        var d = await auth('POST', '/oauth/authorizations/' + encodeURIComponent(authId) + '/consent', { action: accion }, s.access_token);
+        if (d && d.redirect_url) { location.href = d.redirect_url; return; }
+        mensaje(accion === 'approve' ? 'Acceso autorizado' : 'Acceso rechazado', 'Ya puedes volver a la aplicación.');
+      } catch(e){
+        $('btn-deny').disabled = false; if (fila && fila.activo !== false) $('btn-approve').disabled = false;
+        error('err-consent', 'No se pudo completar: ' + e.message);
+      }
+    }
+    $('btn-approve').onclick = function(){ decidir('approve'); };
+    $('btn-deny').onclick = function(){ decidir('deny'); };
+  }
+
+  $('btn-otra').onclick = function(){ try { localStorage.removeItem('rhj_session'); } catch(e){} $('err-consent').style.display = 'none'; $('btn-approve').disabled = false; ver('v-login'); };
+
+  $('v-login').addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    var email = $('email').value.trim(), pass = $('pass').value;
+    $('btn-login').disabled = true; $('btn-login').textContent = 'Entrando…'; $('err-login').style.display = 'none';
+    try {
+      var d = await auth('POST', '/token?grant_type=password', { email: email, password: pass });
+      if (!d || !d.access_token) throw new Error('Invalid');
+      $('pass').value = '';
+      await mostrarConsentimiento(guardarSesion(d, email));
+    } catch(e){
+      error('err-login', /invalid/i.test(e.message) ? 'Email o contraseña incorrectos' : 'No se pudo entrar: ' + e.message);
+    } finally { $('btn-login').disabled = false; $('btn-login').textContent = 'Entrar'; }
+  });
+
+  (async function(){
+    if (!authId) { mensaje('Nada que autorizar', 'Esta página se abre sola cuando conectas el CRM desde una aplicación (por ejemplo, un conector de Claude).'); return; }
+    var s = await sesionValida();
+    if (s) mostrarConsentimiento(s); else ver('v-login');
+  })();
+})();
+</script>
+</body>
+</html>
