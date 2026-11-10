@@ -405,6 +405,18 @@ tbody td{padding:10px 14px;font-size:13px}
 .tel-link{color:var(--blue);text-decoration:none}
 .gs-cerrar{cursor:pointer}.gs-cerrar .gs-x{display:none}
 .ct-call{display:none}   /* botón de llamar: solo en el móvil */
+/* Columnas redimensionables (ordenador): tirador en el borde derecho de cada cabecera */
+.col-resizer{position:absolute;top:0;right:-5px;width:10px;height:100%;cursor:col-resize;z-index:8;user-select:none}
+.col-resizer::after{content:'';position:absolute;top:22%;bottom:22%;left:4px;width:2px;border-radius:1px;background:transparent;transition:background .1s}
+thead th:hover > .col-resizer::after{background:var(--border)}
+.col-resizer:hover::after, .col-resizer.arrastrando::after{background:var(--accent)!important}
+body.redimensionando, body.redimensionando *{cursor:col-resize!important;user-select:none!important}
+@media(min-width:769px){
+  table.tbl.cols-fijas{table-layout:fixed}
+  table.tbl.cols-fijas thead th{overflow:hidden;text-overflow:ellipsis}
+  table.tbl.cols-fijas tbody td{overflow:hidden;text-overflow:ellipsis}
+}
+@media(max-width:768px){ .col-resizer{display:none} .tbl.cols-fijas{width:100%!important;min-width:0!important;table-layout:auto!important} }
 @media(max-width:768px){
   /* Pantalla de acceso: sin barra superior ni menú inferior */
   body:not(.en-app) .mobile-nav, body:not(.en-app) .mobile-topbar{display:none!important}
@@ -1812,6 +1824,7 @@ function iniciarApp(email){
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.body.classList.add('en-app');
+  setTimeout(initColumnasRedimensionables,0);
   var hb=document.getElementById('hamburger');if(hb)hb.style.display='';
   document.getElementById('last-update').textContent = 'Actualizado: '+new Date().toLocaleString('es-ES');
   
@@ -2214,8 +2227,68 @@ function showView(v,btn){
   closeSidebar();
   _alEntrarVista(v);
 }
+// ===== Columnas redimensionables (como en Excel) =====
+// Arrastrar el borde derecho de una cabecera cambia su ancho; doble clic vuelve al ancho automático.
+// Los anchos se recuerdan en este navegador (por tabla). En el móvil no aplica (tarjetas).
+var _ANCHOS_KEY='rhj_anchos_columnas_v1', _ignorarClickOrdenHasta=0;
+function _leerAnchos(){ try{ return JSON.parse(localStorage.getItem(_ANCHOS_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function _guardarAnchos(o){ try{ localStorage.setItem(_ANCHOS_KEY,JSON.stringify(o)); }catch(e){} }
+function _cabeceras(t){ return (t.tHead&&t.tHead.rows[0])?[].slice.call(t.tHead.rows[0].cells):[]; }
+function _claveTabla(t){
+  var v=t.closest('.view'); var lista=v?[].slice.call(v.querySelectorAll('table.tbl')):[t];
+  return (v?v.id:'tabla')+'#'+lista.indexOf(t)+'#'+_cabeceras(t).length;
+}
+function _aplicarAnchos(t,anchos){
+  var total=0;
+  _cabeceras(t).forEach(function(th,i){ var w=anchos[i]||0; th.style.width=w+'px'; total+=w; });
+  t.classList.add('cols-fijas'); t.style.width=total+'px'; t.style.minWidth=total+'px';
+}
+function _quitarAnchos(t){
+  _cabeceras(t).forEach(function(th){ th.style.width=''; });
+  t.classList.remove('cols-fijas'); t.style.width=''; t.style.minWidth='';
+  var g=_leerAnchos(); delete g[_claveTabla(t)]; _guardarAnchos(g);
+}
+function _empezarRedim(e,t,i){
+  if(e.button!==0||window.innerWidth<=768) return;
+  e.preventDefault(); e.stopPropagation();
+  var anchos=_cabeceras(t).map(function(th){ return Math.round(th.getBoundingClientRect().width); });
+  _aplicarAnchos(t,anchos);
+  var x0=e.clientX, w0=anchos[i], h=e.currentTarget;
+  h.classList.add('arrastrando'); document.body.classList.add('redimensionando');
+  function mover(ev){ anchos[i]=Math.max(36,Math.round(w0+ev.clientX-x0)); _aplicarAnchos(t,anchos); }
+  function soltar(){
+    document.removeEventListener('mousemove',mover); document.removeEventListener('mouseup',soltar);
+    h.classList.remove('arrastrando'); document.body.classList.remove('redimensionando');
+    var g=_leerAnchos(); g[_claveTabla(t)]=anchos; _guardarAnchos(g);
+    _ignorarClickOrdenHasta=Date.now()+300;   // que soltar el ratón no ordene la columna
+  }
+  document.addEventListener('mousemove',mover); document.addEventListener('mouseup',soltar);
+}
+document.addEventListener('click',function(e){
+  if(Date.now()<_ignorarClickOrdenHasta && e.target.closest && e.target.closest('thead')){ e.stopPropagation(); e.preventDefault(); }
+},true);
+function initColumnasRedimensionables(){
+  var guardados=_leerAnchos();
+  document.querySelectorAll('table.tbl').forEach(function(t){
+    var ths=_cabeceras(t); if(!ths.length||t.dataset.redim) return;
+    t.dataset.redim='1';
+    ths.forEach(function(th,i){
+      if(getComputedStyle(th).position==='static') th.style.position='relative';
+      var h=document.createElement('span'); h.className='col-resizer';
+      h.title='Arrastra para cambiar el ancho · doble clic: ancho automático';
+      h.addEventListener('mousedown',function(e){ _empezarRedim(e,t,i); });
+      h.addEventListener('click',function(e){ e.stopPropagation(); });
+      h.addEventListener('dblclick',function(e){ e.stopPropagation(); e.preventDefault(); _quitarAnchos(t); });
+      th.appendChild(h);
+    });
+    var g=guardados[_claveTabla(t)];
+    if(g&&g.length===ths.length) _aplicarAnchos(t,g);
+  });
+}
+
 // Carga lo que necesita cada vista al entrar. La usan el menú lateral (showView) y el menú inferior del móvil (mobileNav).
 function _alEntrarVista(v){
+  initColumnasRedimensionables();
   if(v==='analisis'){showViewAnalisis();}
   if(v==='firmados'){
     cargarReclamacionesFirmados();
@@ -2704,7 +2777,7 @@ async function abrirFicha(id){
   if(!c)return;
   _clienteActivoId = id;
   _pintarNombreFicha(c);
-  document.getElementById('ficha-meta').textContent=(c.cif||'—')+' · '+(c.tipo||'—')+(c.canal?' · '+c.canal:'');
+  _pintarMetaFicha(c);
   // Mostrar skeleton mientras carga el cuerpo
   document.getElementById('ficha-body').innerHTML='<div style="padding:20px"><div style="height:14px;background:var(--cream2);border-radius:4px;margin-bottom:12px;width:60%"></div><div style="height:14px;background:var(--cream2);border-radius:4px;margin-bottom:12px;width:80%"></div><div style="height:14px;background:var(--cream2);border-radius:4px;width:40%"></div></div>';
   document.getElementById('ficha-overlay').classList.add('open');
@@ -3006,6 +3079,33 @@ function renderEstacionesFicha(est){
 function _pintarNombreFicha(c){
   var el=document.getElementById('ficha-nombre'); if(!el||!c) return;
   el.innerHTML=esc(c.nombre)+' <button class="btn-icon btn-xs" title="Cambiar el nombre de la empresa" onclick="renombrarCliente(\''+c.id+'\')" style="margin-left:4px;vertical-align:middle">✎</button>';
+}
+// Línea bajo el nombre: CIF (con botón para añadirlo/cambiarlo, para todos los usuarios) · tipo · canal
+function _pintarMetaFicha(c){
+  var el=document.getElementById('ficha-meta'); if(!el||!c) return;
+  el.innerHTML=(c.cif?esc(c.cif):'<span style="font-style:italic">Sin CIF</span>')
+    +' <button class="btn-icon btn-xs" title="'+(c.cif?'Cambiar':'Añadir')+' el CIF" onclick="editarCif(\''+c.id+'\')" style="vertical-align:middle">✎</button>'
+    +' · '+esc(c.tipo||'—')+(c.canal?' · '+esc(c.canal):'');
+}
+function _normCif(v){ return String(v||'').toUpperCase().replace(/[\s.\-\/]/g,''); }
+async function editarCif(id){
+  var c=clientes.find(function(x){return x.id===id;}); if(!c) return;
+  var v=prompt('CIF de '+c.nombre+':', c.cif||'');
+  if(v===null) return;
+  v=_normCif(v);
+  if(v===_normCif(c.cif)) return;
+  // Formatos españoles: CIF (letra + 7 dígitos + control), NIF (8 dígitos + letra), NIE (X/Y/Z + 7 dígitos + letra)
+  if(v && !/^([ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]|\d{8}[A-Z]|[XYZ]\d{7}[A-Z])$/.test(v)
+     && !confirm('«'+v+'» no parece un CIF/NIF español. ¿Guardarlo igualmente?')) return;
+  var otro=v&&clientes.find(function(x){return x.id!==id&&_normCif(x.cif)===v;});
+  if(otro && !confirm('Este CIF ya lo tiene «'+otro.nombre+'». ¿Guardarlo igualmente?')) return;
+  try{
+    await api('PATCH','/rest/v1/'+tablaEscrituraCliente()+'?id=eq.'+id,{cif:v||null, updated_at:new Date().toISOString()});
+    c.cif=v||null;
+    _pintarMetaFicha(c);
+    filtrar(); filtrarFirmados();
+    showToast(v?'CIF guardado':'CIF eliminado','success');
+  }catch(e){ showToast('Error: '+e.message,'error'); }
 }
 async function renombrarCliente(id){
   var c=clientes.find(function(x){return x.id===id;}); if(!c) return;
