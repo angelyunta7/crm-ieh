@@ -1960,16 +1960,13 @@ function _renderClientes(){
   _fetchActividadAll().then(function(acts){
     if(!acts)return;
     _indexarActividad(acts);
-    // La "última actividad" del listado refleja la del GRUPO (como la ficha); si no hay grupo, la del propio cliente.
-    var grupoDe={}; clientes.forEach(function(c){ grupoDe[c.id]=c.grupo||null; });
-    var ultCli={}, ultGrp={};
+    // La "última actividad" del listado es la de cada sociedad (la actividad ya no se comparte en el grupo).
+    var ultCli={};
     acts.forEach(function(a){                 // acts ya vienen ordenados por fecha desc
       if(!ultCli[a.cliente_id]) ultCli[a.cliente_id]=a;
-      var g=grupoDe[a.cliente_id];
-      if(g && !ultGrp[g]) ultGrp[g]=a;
     });
     clientes.forEach(function(c){
-      var a=(c.grupo&&ultGrp[c.grupo])||ultCli[c.id];
+      var a=ultCli[c.id];
       if(a){
         var fecha=new Date(a.fecha).toLocaleDateString('es-ES');
         var nota=a.notas?a.notas.slice(0,45)+(a.notas.length>45?'...':''):'';
@@ -2786,13 +2783,14 @@ async function abrirFicha(id){
     setTimeout(function(){cargarReclamacionesFicha(id);if(c&&c.estado==='Firmado')cargarFacturasAnyo(id);},100);
   }
 
-  // Cargar contactos/actividad/documentos — agregado por grupo si el cliente pertenece a uno
+  // Contactos, documentos y estaciones: agregados por grupo. Actividad: solo la de esta sociedad
   var _memberIds=await getGrupoMemberIds(c);
   var _esGrupo=_memberIds.length>1;
   var _inF='cliente_id=in.('+_memberIds.join(',')+')';
   var [contactos,actividades,documentos,estaciones]=await Promise.all([
     api('GET','/rest/v1/contactos?'+_inF+'&order=es_principal.desc',null,true).catch(function(){return[];}),
-    api('GET','/rest/v1/actividad?'+_inF+'&order=fecha.desc&limit=50',null,true).catch(function(){return[];}),
+    // La actividad (comentarios) es de cada sociedad, no del grupo (petición de Patricia, 12-nov-2026)
+    api('GET','/rest/v1/actividad?cliente_id=eq.'+id+'&order=fecha.desc&limit=50',null,true).catch(function(){return[];}),
     api('GET','/rest/v1/documentos?'+_inF+'&order=created_at.desc',null,true).catch(function(){return[];}),
     api('GET','/rest/v1/estaciones?'+_inF+'&order=provincia,municipio',null,true).catch(function(){return[];})
   ]);
@@ -2959,7 +2957,7 @@ async function abrirFicha(id){
 
     <div class="ficha-section">
       <div class="ficha-section-title">
-        Historial de actividad${_esGrupo?' <span style="font-size:11px;color:var(--blue);font-weight:400">· grupo</span>':''}
+        Historial de actividad${_esGrupo?' <span style="font-size:11px;color:var(--text3);font-weight:400">· solo de esta sociedad</span>':''}
         <button class="btn btn-xs btn-accent" onclick="toggleForm('form-act-${id}')">+ Registrar</button>
       </div>
       <div id="form-act-${id}" style="display:none;margin-bottom:14px">
@@ -4691,7 +4689,7 @@ function renderGrupoSociedades(c){
     +'<button class="btn btn-xs btn-secondary" style="margin-left:auto" data-grp="'+esc(c.grupo)+'" onclick="openModalNuevo(this.dataset.grp)" title="Crear una sociedad nueva ya dentro de este grupo">+ Nueva sociedad en el grupo</button>'
     +'</div>'
     +(otros.length
-       ? '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">Otras sociedades del grupo (los contactos, la actividad y los documentos son compartidos):</div>'+filas
+       ? '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">Otras sociedades del grupo (los contactos y los documentos son compartidos; la actividad es de cada sociedad):</div>'+filas
        : '<div style="font-size:12px;color:var(--text3)">Es la única sociedad registrada de este grupo.</div>')
     +'</div>';
 }
