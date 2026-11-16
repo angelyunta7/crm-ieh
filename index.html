@@ -95,6 +95,34 @@ body.modo-externo .solo-interno{display:none!important}
 .stat-card.warning{border-left:3px solid var(--amber)}
 
 /* TABLA */
+.uso-controles{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.uso-nota{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:16px;max-width:900px}
+.uso-tbl td,.uso-tbl th{white-space:nowrap}
+.uso-tbl td.n,.uso-tbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+.uso-tbl tbody tr.uso-fila{cursor:pointer}
+.uso-tbl tbody tr.uso-fila:hover td{background:var(--cream2,#f3f1ec)}
+.uso-tbl tbody tr.sel td{background:rgba(232,113,74,.10)}
+.uso-barra{display:inline-block;height:8px;border-radius:4px;background:var(--accent);vertical-align:middle;margin-right:6px;opacity:.75}
+.uso-mapa{border-collapse:separate;border-spacing:2px;font-size:11px}
+.uso-mapa td{padding:0}
+.uso-mapa .c{width:20px;height:14px;border-radius:3px;background:#eef2f6}
+.uso-mapa .hd{color:var(--text3);text-align:center;font-size:10px}
+.uso-mapa .dl{color:var(--text2);padding-right:8px;white-space:nowrap}
+.uso-mapa .tot{color:var(--text3);padding-left:8px;white-space:nowrap}
+.uso-ley{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text3);margin-top:6px}
+.uso-ley span.c{width:14px;height:10px;border-radius:2px;display:inline-block}
+.uso-barras{display:flex;align-items:flex-end;gap:4px;height:110px;padding:6px 0 0;border-bottom:1px solid var(--border)}
+.uso-barras .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:14px}
+.uso-barras .bar{width:100%;max-width:26px;background:var(--accent);border-radius:4px 4px 0 0;min-height:0}
+.uso-barras .v{font-size:10px;color:var(--text3);margin-bottom:2px}
+.uso-horas{display:flex;gap:4px}
+.uso-horas div{flex:1;min-width:14px;text-align:center;font-size:10px;color:var(--text3)}
+.uso-det{list-style:none;margin:0;padding:0}
+.uso-det li{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-size:13px;align-items:baseline}
+.uso-det .h{font-family:'DM Mono',monospace;color:var(--text3);font-size:12px;min-width:42px}
+.uso-det .s{color:var(--blue);cursor:pointer;font-weight:500}
+.uso-det .pausa{color:var(--text3);font-size:12px;font-style:italic}
+@media(max-width:768px){.uso-tbl td,.uso-tbl th{white-space:normal}}
 .table-card{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
 .table-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .search-box{display:flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:7px 12px;flex:1;min-width:180px;max-width:280px}
@@ -556,6 +584,10 @@ body.redimensionando, body.redimensionando *{cursor:col-resize!important;user-se
       <button class="nav-item solo-interno" onclick="showView('eliminados',this)">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         <span>Eliminados</span>
+      </button>
+      <button class="nav-item" id="nav-uso" style="display:none" onclick="showView('uso',this)">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>
+        <span>Uso del CRM</span>
       </button>
       <button class="nav-item" onclick="showView('admin',this)" style="margin-top:auto;border-top:1px solid var(--border);padding-top:8px">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1204,6 +1236,26 @@ body.redimensionando, body.redimensionando *{cursor:col-resize!important;user-se
       </div>
     </div>
 
+    <div id="view-uso" class="view">
+      <div class="topbar"><span class="topbar-title">Uso del CRM</span></div>
+      <div class="content">
+        <div class="uso-controles">
+          <select id="uso-persona" onchange="pintarUsoCrm()" title="Persona">
+            <option value="Patricia">Patricia</option><option value="Javier">Javier</option><option value="Ángel">Ángel</option><option value="">Todas las personas</option>
+          </select>
+          <select id="uso-periodo" onchange="cargarUsoCrm()" title="Periodo">
+            <option value="hoy">Hoy</option><option value="semana" selected>Esta semana</option><option value="semana_pasada">Semana pasada</option>
+            <option value="30">Últimos 30 días</option><option value="mes">Este mes</option><option value="mes_pasado">Mes pasado</option><option value="personalizado">Entre fechas…</option>
+          </select>
+          <span id="uso-fechas" style="display:none"><input type="date" id="uso-desde" onchange="cargarUsoCrm()"> – <input type="date" id="uso-hasta" onchange="cargarUsoCrm()"></span>
+          <button class="btn btn-secondary btn-xs" onclick="cargarUsoCrm()">Actualizar</button>
+        </div>
+        <div class="uso-nota"><b>Tiempo activo</b>: minutos con el CRM abierto y en uso (si no se toca en 2 minutos, deja de contar). <b>Registros</b>: llamadas, emails, WhatsApp y notas del historial. <b>Cambios</b>: fases, próximas llamadas, CIF, contactos, documentos… El tiempo activo y los cambios se miden desde el 16/11/2026; antes solo hay registros. Pulsa un día para ver el detalle.</div>
+        <div id="uso-cuerpo"></div>
+        <div id="uso-detalle"></div>
+      </div>
+    </div>
+
     <div id="view-admin" class="view">
       <div class="topbar">
         <span class="topbar-title">Admin</span>
@@ -1684,6 +1736,7 @@ async function detectarModoExterno(email){
     _personaUsuario=f.persona||'';
     _rolUsuario=f.rol||'';
   }catch(e){MODO_EXTERNO=false;}
+  var _nu=document.getElementById('nav-uso'); if(_nu) _nu.style.display=(_rolUsuario==='admin')?'':'none';
   document.body.classList.toggle('modo-externo',MODO_EXTERNO);
   if(_personaUsuario){
     var un=document.getElementById('user-name'), ua=document.getElementById('user-avatar');
@@ -1825,6 +1878,7 @@ function iniciarApp(email){
   document.getElementById('app').style.display = 'block';
   document.body.classList.add('en-app');
   setTimeout(initColumnasRedimensionables,0);
+  _iniciarLatidos();
   var hb=document.getElementById('hamburger');if(hb)hb.style.display='';
   document.getElementById('last-update').textContent = 'Actualizado: '+new Date().toLocaleString('es-ES');
   
@@ -2224,6 +2278,190 @@ function showView(v,btn){
   closeSidebar();
   _alEntrarVista(v);
 }
+// ===== Control de uso del CRM =====
+// Latido cada minuto mientras el CRM está visible y se ha usado (ratón, teclado, toque) en los últimos 2 minutos.
+// El servidor lo guarda por franjas de 5 minutos (tabla uso_minutos). Solo el admin ve los datos (es_admin()).
+var _ultimoUso=Date.now(), _latidoTimer=null;
+function _marcarUso(){ _ultimoUso=Date.now(); }
+function _iniciarLatidos(){
+  if(_latidoTimer) return;
+  ['mousemove','mousedown','keydown','wheel','touchstart','scroll'].forEach(function(ev){ document.addEventListener(ev,_marcarUso,{passive:true,capture:true}); });
+  var latir=function(){
+    if(!session||document.visibilityState!=='visible'||Date.now()-_ultimoUso>120000) return;
+    api('POST','/rest/v1/rpc/latido',{}).catch(function(){});
+  };
+  setTimeout(latir,3000);
+  _latidoTimer=setInterval(latir,60000);
+}
+var _usoDatos=[], _usoHoras=[], _usoSel='';
+var _USO_COLORES=['#eef2f6','#fde4d9','#f9bfa6','#f29772','#e8714a','#b4532f'];
+function _usoColor(v,max){ if(!v) return _USO_COLORES[0]; var x=v/(max||1); return x<.2?_USO_COLORES[1]:x<.4?_USO_COLORES[2]:x<.65?_USO_COLORES[3]:x<.9?_USO_COLORES[4]:_USO_COLORES[5]; }
+// Mapa día × hora: color = minutos en uso (días medidos) o nº de registros (días anteriores a la medición)
+function _mapaUso(persona,filas){
+  var hs=(_usoHoras||[]).filter(function(h){ return h.persona===persona; });
+  if(!hs.length) return '';
+  var horas=hs.map(function(h){return h.hora;});
+  var h0=Math.max(6,Math.min(8,Math.min.apply(null,horas))), h1=Math.min(23,Math.max(15,Math.max.apply(null,horas)));
+  var cel={}; hs.forEach(function(h){ cel[h.dia+'|'+h.hora]=h; });
+  var maxReg=Math.max.apply(null,hs.map(function(h){return h.registros;}).concat([1]));
+  var dias=filas.filter(function(f){ return (+f.registros||0)>0||(+f.minutos||0)>0; }).slice().sort(function(a,b){ return String(a.dia).localeCompare(String(b.dia)); });
+  var H=[]; for(var h=h0;h<=h1;h++) H.push(h);
+  var cab='<tr><td></td>'+H.map(function(h){ return '<td class="hd">'+h+'</td>'; }).join('')+'<td></td></tr>';
+  var cuerpo=dias.map(function(f){
+    var medido=(+f.minutos||0)>0;
+    return '<tr><td class="dl">'+_fechaUso(f.dia)+'</td>'+H.map(function(h){
+      var c=cel[f.dia+'|'+h], v=c?(medido?c.minutos:c.registros):0;
+      var tit=c?(h+':00 · '+(medido?c.minutos+' min en uso · ':'')+c.registros+' registros'):'';
+      return '<td><div class="c" title="'+esc(tit)+'" style="background:'+_usoColor(v,medido?60:maxReg)+'"></div></td>';
+    }).join('')+'<td class="tot">'+(f.registros||0)+' reg.'+(medido?' · '+_hm(f.minutos):'')+'</td></tr>';
+  }).join('');
+  return '<div class="table-card" style="margin-top:16px;padding:16px 20px;overflow-x:auto"><div style="font-weight:600;font-size:14px;margin-bottom:2px">Actividad por día y hora</div>'
+    +'<div style="font-size:12px;color:var(--text3);margin-bottom:8px">Cada casilla es una hora. Color: minutos con el CRM en uso (desde el 16/11/2026) o nº de registros en esa hora (antes). Pasa el ratón por una casilla para ver el dato.</div>'
+    +'<table class="uso-mapa">'+cab+cuerpo+'</table>'
+    +'<div class="uso-ley">menos '+_USO_COLORES.map(function(c){ return '<span class="c" style="background:'+c+'"></span>'; }).join('')+' más</div></div>';
+}
+// Gráfico de barras de un día (como «Tiempo de uso» del iPhone)
+function _barrasDiaUso(persona,dia){
+  var hs=(_usoHoras||[]).filter(function(h){ return h.persona===persona&&h.dia===dia; });
+  if(!hs.length) return '';
+  var medido=hs.some(function(h){ return h.minutos>0; });
+  var por={}; hs.forEach(function(h){ por[h.hora]=h; });
+  var horas=hs.map(function(h){return h.hora;});
+  var h0=Math.max(6,Math.min(8,Math.min.apply(null,horas))), h1=Math.min(23,Math.max(15,Math.max.apply(null,horas)));
+  var max=medido?60:Math.max.apply(null,hs.map(function(h){return h.registros;}).concat([1]));
+  var cols='', etq='';
+  for(var h=h0;h<=h1;h++){
+    var x=por[h], v=x?(medido?x.minutos:x.registros):0;
+    cols+='<div class="col" title="'+h+':00 · '+(x?(medido?x.minutos+' min en uso · ':'')+x.registros+' registros':'sin actividad')+'"><span class="v">'+(v?(medido?v+'′':v):'')+'</span><div class="bar" style="height:'+Math.round(90*v/max)+'px"></div></div>';
+    etq+='<div>'+h+'</div>';
+  }
+  return '<div style="font-size:12px;color:var(--text3);margin:4px 0 2px">'+(medido?'Minutos con el CRM en uso en cada hora':'Registros hechos en cada hora (este día aún no se medía el tiempo)')+'</div>'
+    +'<div class="uso-barras">'+cols+'</div><div class="uso-horas">'+etq+'</div>';
+}
+function _isoDia(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _rangoUso(){
+  var p=document.getElementById('uso-periodo').value, h=new Date(), d=new Date(h), a=new Date(h);
+  var lunes=function(x){ var y=new Date(x); y.setDate(y.getDate()-((y.getDay()+6)%7)); return y; };
+  if(p==='semana'){ d=lunes(h); }
+  else if(p==='semana_pasada'){ d=lunes(h); d.setDate(d.getDate()-7); a=new Date(d); a.setDate(a.getDate()+6); }
+  else if(p==='30'){ d.setDate(d.getDate()-29); }
+  else if(p==='mes'){ d=new Date(h.getFullYear(),h.getMonth(),1); }
+  else if(p==='mes_pasado'){ d=new Date(h.getFullYear(),h.getMonth()-1,1); a=new Date(h.getFullYear(),h.getMonth(),0); }
+  else if(p==='personalizado'){ return {desde:document.getElementById('uso-desde').value, hasta:document.getElementById('uso-hasta').value}; }
+  return {desde:_isoDia(d), hasta:_isoDia(a)};
+}
+async function cargarUsoCrm(){
+  var cont=document.getElementById('uso-cuerpo'); if(!cont) return;
+  var per=document.getElementById('uso-periodo').value;
+  document.getElementById('uso-fechas').style.display=(per==='personalizado')?'':'none';
+  document.getElementById('uso-detalle').innerHTML='';
+  var r=_rangoUso();
+  if(!r.desde||!r.hasta){ cont.innerHTML='<p style="font-size:13px;color:var(--text3)">Elige las dos fechas.</p>'; return; }
+  cont.innerHTML='<p style="font-size:13px;color:var(--text3)">Cargando…</p>';
+  try{
+    var res=await Promise.all([
+      api('POST','/rest/v1/rpc/uso_crm',{p_desde:r.desde,p_hasta:r.hasta}),
+      api('POST','/rest/v1/rpc/uso_crm_horas',{p_desde:r.desde,p_hasta:r.hasta})
+    ]);
+    _usoDatos=res[0]||[]; _usoHoras=res[1]||[];
+  }
+  catch(e){ cont.innerHTML='<p style="font-size:13px;color:var(--red)">No se pudo cargar: '+esc(e.message)+'</p>'; return; }
+  _usoSel=''; pintarUsoCrm();
+}
+function _hm(min){ min=Math.round(min||0); var h=Math.floor(min/60), m=min%60; return h?(h+' h '+String(m).padStart(2,'0')+' min'):(m+' min'); }
+function _fechaUso(iso){ var p=String(iso).split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]); return d.toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit'}); }
+var _CAMPOS_SUMA_USO=['minutos','registros','llamadas','emails','whatsapp','otros','sociedades','cambios','fases','llamadas_prog','altas','cif','contactos','documentos'];
+function _sumarUso(filas){
+  var s={dias:0,diasMin:0,diasReg:0}; _CAMPOS_SUMA_USO.forEach(function(k){ s[k]=0; });
+  filas.forEach(function(f){
+    _CAMPOS_SUMA_USO.forEach(function(k){ s[k]+=(+f[k]||0); });
+    if((+f.minutos||0)>0||(+f.registros||0)>0||(+f.cambios||0)>0) s.dias++;
+    if((+f.minutos||0)>0) s.diasMin++;          // la media de tiempo solo cuenta días ya medidos
+    if((+f.registros||0)>0) s.diasReg++;
+  });
+  return s;
+}
+function pintarUsoCrm(){
+  var cont=document.getElementById('uso-cuerpo'); if(!cont) return;
+  var persona=document.getElementById('uso-persona').value;
+  var filas=(_usoDatos||[]).filter(function(f){ return !persona||f.persona===persona; });
+  document.getElementById('uso-detalle').innerHTML='';
+  if(!filas.length){ cont.innerHTML='<div class="table-card" style="padding:18px 20px;font-size:13px;color:var(--text3)">Sin uso registrado en este periodo.</div>'; return; }
+  var html='';
+  if(persona){
+    var s=_sumarUso(filas);
+    html+='<div class="stats-grid">'
+      +'<div class="stat-card accent"><div class="stat-label">Tiempo activo</div><div class="stat-value">'+_hm(s.minutos)+'</div><div class="stat-sub">'+(s.minutos?_hm(s.minutos/s.diasMin)+' de media al día ('+s.diasMin+' días medidos)':'se mide desde el 16/11/2026')+'</div></div>'
+      +'<div class="stat-card info"><div class="stat-label">Días con uso</div><div class="stat-value">'+s.dias+'</div><div class="stat-sub">en el periodo</div></div>'
+      +'<div class="stat-card success"><div class="stat-label">Registros</div><div class="stat-value">'+s.registros+'</div><div class="stat-sub">'+s.llamadas+' llamadas · '+s.emails+' emails · '+s.whatsapp+' WhatsApp · '+Math.round(s.registros/(s.diasReg||1))+'/día</div></div>'
+      +'<div class="stat-card warning"><div class="stat-label">Cambios</div><div class="stat-value">'+s.cambios+'</div><div class="stat-sub">'+s.fases+' de fase · '+s.llamadas_prog+' próx. llamadas · '+s.contactos+' contactos</div></div>'
+      +'</div>';
+    var _mapa=_mapaUso(persona,filas);
+  } else {
+    var porP={}; filas.forEach(function(f){ (porP[f.persona]=porP[f.persona]||[]).push(f); });
+    html+='<div class="table-card" style="margin-bottom:16px;overflow-x:auto"><table class="tbl uso-tbl"><thead><tr><th>Persona</th><th class="n">Días</th><th class="n">Tiempo activo</th><th class="n">Media/día medido</th><th class="n">Registros</th><th class="n">Llamadas</th><th class="n">Emails</th><th class="n">WhatsApp</th><th class="n">Fases</th><th class="n">Próx. llamadas</th><th class="n">Contactos</th><th class="n">Cambios</th></tr></thead><tbody>'
+      +Object.keys(porP).sort().map(function(p){ var s=_sumarUso(porP[p]), dd=s.diasMin||1;
+        return '<tr><td><b>'+esc(p)+'</b></td><td class="n">'+s.dias+'</td><td class="n">'+_hm(s.minutos)+'</td><td class="n">'+_hm(s.minutos/dd)+'</td><td class="n">'+s.registros+'</td><td class="n">'+s.llamadas+'</td><td class="n">'+s.emails+'</td><td class="n">'+s.whatsapp+'</td><td class="n">'+s.fases+'</td><td class="n">'+s.llamadas_prog+'</td><td class="n">'+s.contactos+'</td><td class="n">'+s.cambios+'</td></tr>'; }).join('')
+      +'</tbody></table></div>';
+  }
+  var maxR=Math.max.apply(null,filas.map(function(f){ return +f.registros||0; }).concat([1]));
+  html+='<div class="table-card" style="overflow-x:auto"><table class="tbl uso-tbl"><thead><tr><th>Día</th>'+(persona?'':'<th>Persona</th>')
+    +'<th>Conectada</th><th class="n">Tiempo activo</th><th>Registros</th><th class="n">Llam.</th><th class="n">Email</th><th class="n">WhatsApp</th><th class="n">Notas</th><th class="n">Sociedades</th><th class="n">Fases</th><th class="n">Próx. llam.</th><th class="n">Contactos</th><th class="n">Docs</th><th class="n">Cambios</th></tr></thead><tbody>'
+    +filas.map(function(f){
+      var con=f.con_ini?(f.con_ini+'–'+f.con_fin):(f.reg_ini?'<span style="color:var(--text3)" title="Hora del primer y último registro">'+f.reg_ini+'–'+f.reg_fin+'</span>':'—');
+      var k=f.persona+'|'+f.dia;
+      return '<tr class="uso-fila'+(_usoSel===k?' sel':'')+'" data-p="'+esc(f.persona)+'" data-d="'+esc(f.dia)+'" onclick="verDetalleUso(this.dataset.p,this.dataset.d,this)">'
+        +'<td>'+_fechaUso(f.dia)+'</td>'+(persona?'':'<td>'+esc(f.persona)+'</td>')
+        +'<td>'+con+'</td><td class="n">'+(f.minutos?_hm(f.minutos):'—')+'</td>'
+        +'<td><span class="uso-barra" style="width:'+Math.round(60*(+f.registros||0)/maxR)+'px"></span>'+f.registros+'</td>'
+        +'<td class="n">'+f.llamadas+'</td><td class="n">'+f.emails+'</td><td class="n">'+f.whatsapp+'</td><td class="n">'+f.otros+'</td><td class="n">'+f.sociedades+'</td>'
+        +'<td class="n">'+f.fases+'</td><td class="n">'+f.llamadas_prog+'</td><td class="n">'+f.contactos+'</td><td class="n">'+f.documentos+'</td><td class="n">'+f.cambios+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  if(persona&&typeof _mapa!=='undefined') html+=_mapa;
+  cont.innerHTML=html;
+}
+var _CAMPO_USO={estado:'Fase',fecha_llamar:'Próxima llamada',responsable:'Responsable',cif:'CIF',grupo:'Grupo',conocimiento_ieh:'Conocimiento IEH',nombre:'Nombre',fecha_firma:'Fecha de firma',referido_por:'Referido por'};
+var _TABLA_USO={clientes:'Ficha',contactos:'Contacto',actividad:'Registro del historial',documentos:'Documento',documento_comentarios:'Comentario en documento',estaciones:'Estación',reclamaciones:'Reclamación',tarifarios:'Tarifario',cliente_facturas_anyo:'Facturas por año',sentencias:'Sentencia'};
+function _describirCambio(x){
+  var acc={INSERT:'añadido',UPDATE:'editado',DELETE:'borrado'}[x.accion]||x.accion;
+  if(x.tabla==='clientes'){
+    if(x.accion==='INSERT') return 'Alta de sociedad';
+    if(x.accion==='DELETE') return 'Sociedad borrada';
+    var campos=x.campos||[], partes=[];
+    campos.forEach(function(k){
+      var a=x.antes?x.antes[k]:null, d=x.despues?x.despues[k]:null;
+      if(k==='eliminado_at'){ partes.push(d?'Enviada a Eliminados':'Recuperada de Eliminados'); return; }
+      if(_CAMPO_USO[k]) partes.push(_CAMPO_USO[k]+': '+((a==null||a==='')?'—':String(a))+' → '+((d==null||d==='')?'—':String(d)));
+    });
+    var resto=campos.filter(function(k){ return !_CAMPO_USO[k]&&k!=='eliminado_at'; });
+    if(resto.length) partes.push('Ficha: '+resto.map(function(k){ return k.replace(/_/g,' '); }).join(', '));
+    return partes.join(' · ')||'Ficha editada';
+  }
+  return (_TABLA_USO[x.tabla]||x.tabla)+' '+acc+(x.accion==='UPDATE'&&x.campos&&x.campos.length?' ('+x.campos.map(function(k){return k.replace(/_/g,' ');}).join(', ')+')':'');
+}
+async function verDetalleUso(persona,dia,tr){
+  var box=document.getElementById('uso-detalle'); if(!box) return;
+  _usoSel=persona+'|'+dia;
+  document.querySelectorAll('.uso-tbl tr.sel').forEach(function(r){ r.classList.remove('sel'); }); if(tr) tr.classList.add('sel');
+  box.innerHTML='<div class="table-card" style="margin-top:16px;padding:16px 20px;font-size:13px;color:var(--text3)">Cargando detalle…</div>';
+  var lst;
+  try{ lst=await api('POST','/rest/v1/rpc/uso_crm_detalle',{p_persona:persona,p_dia:dia})||[]; }
+  catch(e){ box.innerHTML='<div class="table-card" style="margin-top:16px;padding:16px 20px;color:var(--red)">No se pudo cargar: '+esc(e.message)+'</div>'; return; }
+  var prev=null;
+  var items=lst.map(function(x){
+    var gap='';
+    if(prev){ var m=Math.round((new Date(x.ts)-new Date(prev))/60000); if(m>=30) gap='<li><span class="h"></span><span class="pausa">'+_hm(m)+' sin registrar nada</span></li>'; }
+    prev=x.ts;
+    var ico=x.que==='registro'?({Llamada:'📞',Email:'✉️',WhatsApp:'💬'}[x.tipo]||'📝'):'✎';
+    var soc=x.sociedad?'<span class="s" data-id="'+esc(x.cliente_id)+'" onclick="abrirFicha(this.dataset.id)">'+esc(x.sociedad)+'</span> · ':'';
+    var txt=x.que==='registro'?(esc(x.tipo||'Registro')+(x.texto?': <span style="color:var(--text2)">'+esc(x.texto)+'</span>':'')):esc(_describirCambio(x));
+    return gap+'<li><span class="h">'+esc(x.hora)+'</span><span>'+ico+'</span><span style="flex:1">'+soc+txt+'</span></li>';
+  }).join('');
+  box.innerHTML='<div class="table-card" style="margin-top:16px;padding:16px 20px"><div style="font-weight:600;font-size:14px;margin-bottom:8px">'+esc(persona)+' · '+_fechaUso(dia)+' <span style="font-weight:400;color:var(--text3);font-size:12px">('+lst.length+' acciones)</span></div>'
+    +_barrasDiaUso(persona,dia)+'<div style="height:12px"></div>'
+    +(items?'<ul class="uso-det">'+items+'</ul>':'<p style="font-size:13px;color:var(--text3)">Sin acciones registradas este día (solo tiempo conectada).</p>')+'</div>';
+  box.scrollIntoView({behavior:'smooth',block:'start'});
+}
 // ===== Columnas redimensionables (como en Excel) =====
 // Arrastrar el borde derecho de una cabecera cambia su ancho; doble clic vuelve al ancho automático.
 // Los anchos se recuerdan en este navegador (por tabla). En el móvil no aplica (tarjetas).
@@ -2295,6 +2533,7 @@ function _alEntrarVista(v){
   if(v==='matriz'){ if(!Object.keys(_recPorCliente||{}).length) cargarReclamacionesFirmados().then(renderMatrizImportes); else renderMatrizImportes(); }
   if(v==='sentencias') cargarSentencias(false);
   if(v==='admin') renderUsuariosAdmin();
+  if(v==='uso') cargarUsoCrm();
   if(v==='eliminados') cargarEliminados();
   if(v==='clientes'){ _soloNoFirmados=false; _setClientesTitulo(false); filtrar(); }
 }
