@@ -161,6 +161,7 @@ tbody td{padding:10px 14px;font-size:13px}
 .badge-firmado{background:var(--green-bg);color:var(--green)}
 .badge-out{background:var(--red-bg);color:var(--red)}
 .badge-extinguida{background:#e5e7eb;color:#374151}
+.badge-standby{background:#ede9fe;color:#6d28d9}
 .badge-w{background:var(--navy);color:var(--white);font-size:10px;padding:2px 6px}
 .badge-a{background:var(--accent);color:var(--white);font-size:10px;padding:2px 6px}
 .dias-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;font-size:11px;font-family:'DM Mono',monospace}
@@ -681,6 +682,7 @@ body.redimensionando, body.redimensionando *{cursor:col-resize!important;user-se
                   <option value="Sin contactar">Sin contactar</option>
                   <option value="Contactado">Contactado</option>
                   <option value="Con Interés">Con Interés</option>
+                  <option value="Stand by">Stand by</option>
                   <option value="Firmado">Firmado</option>
                   <option value="OUT. Sin interés">OUT</option>
                   <option value="Extinguida">Extinguida</option>
@@ -757,7 +759,7 @@ body.redimensionando, body.redimensionando *{cursor:col-resize!important;user-se
                 <th><input type="text" id="cf-email" placeholder="Filtrar..." oninput="filtrar()"><label class="ct-rep-lbl"><input type="checkbox" id="cf-email-rep" onchange="filtrar()"> solo repetidos</label></th>
                 <th><input type="text" id="cf-tel" placeholder="Filtrar..." inputmode="tel" oninput="filtrar()"><label class="ct-rep-lbl"><input type="checkbox" id="cf-tel-rep" onchange="filtrar()"> solo repetidos</label></th>
                 <th><select id="cf-tipo" onchange="filtrar()"><option value="">Todos</option></select></th>
-                <th><select id="cf-estado" onchange="filtrar()"><option value="">Todos</option><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option><option value="Firmado">Firmado</option><option value="OUT. Sin interés">OUT</option><option value="Extinguida">Extinguida</option></select></th>
+                <th><select id="cf-estado" onchange="filtrar()"><option value="">Todos</option><option value="Sin contactar">Sin contactar</option><option value="Contactado">Contactado</option><option value="Con Interés">Con Interés</option><option value="Stand by">Stand by</option><option value="Firmado">Firmado</option><option value="OUT. Sin interés">OUT</option><option value="Extinguida">Extinguida</option></select></th>
                 <th><select id="cf-conocimiento" onchange="filtrar()"><option value="">Todos</option><option>Nulo</option><option>Medio</option><option>Alto</option></select></th>
                 <th><div class="col-num-range"><input type="number" id="cf-imp-min" placeholder="mín" oninput="filtrar()"><input type="number" id="cf-imp-max" placeholder="máx" oninput="filtrar()"></div></th>
                 <th></th>
@@ -823,6 +825,7 @@ body.redimensionando, body.redimensionando *{cursor:col-resize!important;user-se
                   <option value="">Contactado + Con Interés</option>
                   <option value="Contactado">Solo Contactado</option>
                   <option value="Con Interés">Solo Con Interés</option>
+                  <option value="Stand by">Solo Stand by</option>
                 </select>
               </div>
               <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:3px">Tipo</label>
@@ -2766,7 +2769,7 @@ async function renderNovedades(){if(MODO_EXTERNO)return;
   }catch(e){}
 }
 function renderDashboard(){if(MODO_EXTERNO)return;
-  var counts={'Sin contactar':0,'Contactado':0,'Con Interés':0,'Firmado':0,'OUT. Sin interés':0,'Extinguida':0};
+  var counts={'Sin contactar':0,'Contactado':0,'Con Interés':0,'Stand by':0,'Firmado':0,'OUT. Sin interés':0,'Extinguida':0};
   clientes.forEach(function(c){
     if(counts[c.estado]!==undefined)counts[c.estado]++;
     else counts['Sin contactar']++;
@@ -2784,7 +2787,7 @@ function renderDashboard(){if(MODO_EXTERNO)return;
   document.getElementById('st-interes').textContent=counts['Contactado']+counts['Con Interés'];
   document.getElementById('st-sincontactar').textContent=formatNum(counts['Sin contactar']);
   document.getElementById('st-potencial').textContent=formatEur(potencial)+' potencial';
-  var cols={'Sin contactar':'#d1d5db','Contactado':'#60a5fa','Con Interés':'#fbbf24','Firmado':'#34d399','OUT. Sin interés':'#f87171','Extinguida':'#9ca3af'};
+  var cols={'Sin contactar':'#d1d5db','Contactado':'#60a5fa','Con Interés':'#fbbf24','Stand by':'#a78bfa','Firmado':'#34d399','OUT. Sin interés':'#f87171','Extinguida':'#9ca3af'};
   var maxC=Math.max.apply(null,Object.keys(counts).map(function(k){return counts[k];}).concat([1]));
   document.getElementById('chart-estados').innerHTML=Object.keys(counts).map(function(k){
     return '<div class="bar-row"><span class="bar-label">'+k+'</span>'
@@ -3044,8 +3047,8 @@ async function abrirFicha(id){
   var _comentPorDoc={};(docComentarios||[]).forEach(function(x){(_comentPorDoc[x.documento_id]=_comentPorDoc[x.documento_id]||[]).push(x);});
   _docMeta={};documentos.forEach(function(d){_docMeta[d.id]={p:d.storage_path,n:d.nombre};});
 
-  var estados=['Sin contactar','Contactado','Con Interés','Firmado','OUT. Sin interés','Extinguida'];
-  var colE={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Firmado':'badge-firmado','OUT. Sin interés':'badge-out','Extinguida':'badge-extinguida'};
+  var estados=['Sin contactar','Contactado','Con Interés','Stand by','Firmado','OUT. Sin interés','Extinguida'];
+  var colE={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Stand by':'badge-standby','Firmado':'badge-firmado','OUT. Sin interés':'badge-out','Extinguida':'badge-extinguida'};
 
   document.getElementById('ficha-body').innerHTML=`
     ${c.grupo?renderGrupoSociedades(c):''}
@@ -3781,7 +3784,7 @@ function badgeKnowledge(k){
 }
 
 function badgeEstado(e){
-  var m={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Firmado':'badge-firmado','OUT. Sin interés':'badge-out','Extinguida':'badge-extinguida'};
+  var m={'Sin contactar':'badge-sin','Contactado':'badge-contactado','Con Interés':'badge-interes','Stand by':'badge-standby','Firmado':'badge-firmado','OUT. Sin interés':'badge-out','Extinguida':'badge-extinguida'};
   return`<span class="badge ${m[e]||'badge-sin'}">${e||'Sin contactar'}</span>`;
 }
 // ── Helpers de grupo + deduplicado (agregación de contactos/actividad/documentos por grupo) ──
